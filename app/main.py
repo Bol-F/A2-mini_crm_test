@@ -5,9 +5,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import (
     DATABASE_PATH,
@@ -17,9 +15,6 @@ from app.database import (
     update_lead_stage,
 )
 from app.schemas import HealthResponse, LeadCreate, LeadResponse, LeadStageUpdate
-
-BASE_DIR = Path(__file__).resolve().parent
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
@@ -32,16 +27,15 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
 
     application = FastAPI(title="A2 Mini CRM", lifespan=lifespan)
     application.state.database_path = database_path
-    application.mount(
-        "/static",
-        StaticFiles(directory=BASE_DIR / "static"),
-        name="static",
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_methods=["GET", "POST", "PATCH"],
+        allow_headers=["Content-Type", "Accept-Language"],
     )
-
-    @application.get("/", response_class=HTMLResponse)
-    def home(request: Request) -> HTMLResponse:
-        """Render the application landing page."""
-        return templates.TemplateResponse(request=request, name="index.html")
 
     @application.get("/api/health", response_model=HealthResponse)
     def health_check() -> HealthResponse:

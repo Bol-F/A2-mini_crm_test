@@ -1,13 +1,97 @@
-"""Small SQLite helpers for future lead-card features."""
+"""SQLite storage helpers for CRM leads."""
 
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 DATABASE_PATH = Path(__file__).resolve().parent.parent / "crm.sqlite3"
 
 
-def get_connection() -> sqlite3.Connection:
-    """Return a SQLite connection whose rows support name-based access."""
-    connection = sqlite3.connect(DATABASE_PATH)
+@contextmanager
+def get_connection(database_path: Path = DATABASE_PATH) -> Iterator[sqlite3.Connection]:
+    """Yield a configured connection and always close it afterwards."""
+    connection = sqlite3.connect(database_path)
     connection.row_factory = sqlite3.Row
-    return connection
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+
+def initialize_database(database_path: Path = DATABASE_PATH) -> None:
+    """Create the leads table without changing existing lead data."""
+    with get_connection(database_path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS leads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                lead_source TEXT NOT NULL,
+                responsible TEXT NOT NULL,
+                deal_stage TEXT NOT NULL,
+                technical_spec_requested INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.commit()
+
+
+def create_lead(database_path: Path, lead_data: dict[str, Any]) -> dict[str, Any]:
+    """Insert a lead and return the saved row."""
+    created_at = datetime.now(UTC).isoformat()
+
+    with get_connection(database_path) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO leads (
+                client_name,
+                phone,
+                lead_source,
+                responsible,
+                deal_stage,
+                technical_spec_requested,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                lead_data["client_name"],
+                lead_data["phone"],
+                lead_data["lead_source"],
+                lead_data["responsible"],
+                lead_data["deal_stage"],
+                int(lead_data["technical_spec_requested"]),
+                created_at,
+            ),
+        )
+        connection.commit()
+        row = connection.execute(
+            "SELECT * FROM leads WHERE id = ?",
+            (cursor.lastrowid,),
+        ).fetchone()
+
+    if row is None:
+        raise RuntimeError("The created lead could not be loaded.")
+    return _row_to_lead(row)
+
+
+def list_leads(database_path: Path) -> list[dict[str, Any]]:
+    """Return all leads from newest to oldest."""
+    with get_connection(database_path) as connection:
+        rows = connection.execute(
+            "SELECT * FROM leads ORDER BY created_at DESC, id DESC"
+        ).fetchall()
+
+    return [_row_to_lead(row) for row in rows]
+
+
+def _row_to_lead(row: sqlite3.Row) -> dict[str, Any]:
+    """Convert a SQLite row into API-friendly values."""
+    lead = dict(row)
+    lead["technical_spec_requested"] = bool(lead["technical_spec_requested"])
+    return lead

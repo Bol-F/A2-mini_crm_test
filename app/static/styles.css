@@ -212,6 +212,35 @@ button:disabled {
     overflow-wrap: anywhere;
 }
 
+.stage-editor {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #d8dee8;
+}
+
+.stage-editor label {
+    font-size: 0.9rem;
+}
+
+.stage-editor select {
+    min-height: 2.4rem;
+}
+
+.card-message {
+    font-size: 0.9rem;
+    color: #17623a;
+}
+
+.card-message-error {
+    color: #8f1d22;
+}
+
+.card-message:not([hidden]) {
+    margin-bottom: 0;
+}
+
 [hidden] {
     display: none;
 }

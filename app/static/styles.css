@@ -1,0 +1,27 @@
+:root {
+    color-scheme: light;
+    font-family: system-ui, sans-serif;
+    color: #1f2937;
+    background: #f3f4f6;
+}
+
+body {
+    display: grid;
+    min-height: 100vh;
+    margin: 0;
+    place-items: center;
+}
+
+.status-card {
+    width: min(90%, 32rem);
+    padding: 2rem;
+    text-align: center;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 10%);
+}
+
+.status {
+    color: #047857;
+    font-weight: 600;
+}

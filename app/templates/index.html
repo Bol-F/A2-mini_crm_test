@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>A2 Mini CRM</title>
+        <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    </head>
+    <body>
+        <main class="status-card">
+            <h1>A2 Mini CRM</h1>
+            <p>The application is running.</p>
+            <p id="api-status" class="status">Checking API status…</p>
+        </main>
+        <script src="{{ url_for('static', path='/app.js') }}"></script>
+    </body>
+</html>

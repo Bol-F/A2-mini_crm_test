@@ -4,13 +4,19 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.database import DATABASE_PATH, create_lead, initialize_database, list_leads
-from app.schemas import HealthResponse, LeadCreate, LeadResponse
+from app.database import (
+    DATABASE_PATH,
+    create_lead,
+    initialize_database,
+    list_leads,
+    update_lead_stage,
+)
+from app.schemas import HealthResponse, LeadCreate, LeadResponse, LeadStageUpdate
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
@@ -58,6 +64,25 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
             request.app.state.database_path,
             lead.model_dump(mode="json"),
         )
+
+    @application.patch(
+        "/api/leads/{lead_id}/stage",
+        response_model=LeadResponse,
+    )
+    def patch_lead_stage(
+        lead_id: int,
+        stage_update: LeadStageUpdate,
+        request: Request,
+    ) -> dict[str, object]:
+        """Change a lead's deal stage."""
+        updated_lead = update_lead_stage(
+            request.app.state.database_path,
+            lead_id,
+            stage_update.deal_stage.value,
+        )
+        if updated_lead is None:
+            raise HTTPException(status_code=404, detail="Lead not found.")
+        return updated_lead
 
     return application
 

@@ -8,9 +8,10 @@ async function checkApiHealth() {
         }
 
         const data = await response.json();
-        statusElement.textContent = `API status: ${data.status}`;
+        statusElement.textContent =
+            data.status === "ok" ? "Сервер подключён" : "Сервер недоступен";
     } catch (error) {
-        statusElement.textContent = "API status: unavailable";
+        statusElement.textContent = "Сервер недоступен";
         console.error(error);
     }
 }

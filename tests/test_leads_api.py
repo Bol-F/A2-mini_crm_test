@@ -121,3 +121,61 @@ def test_leads_persist_across_application_restarts(tmp_path: Path) -> None:
     assert [lead["id"] for lead in list_response.json()] == [
         create_response.json()["id"]
     ]
+
+
+def test_update_lead_stage(client: TestClient) -> None:
+    created_lead = client.post("/api/leads", json=VALID_LEAD).json()
+
+    response = client.patch(
+        f"/api/leads/{created_lead['id']}/stage",
+        json={"deal_stage": "Квалифицирован"},
+    )
+
+    assert response.status_code == 200
+    updated_lead = response.json()
+    assert updated_lead["deal_stage"] == "Квалифицирован"
+    assert {
+        key: value
+        for key, value in updated_lead.items()
+        if key != "deal_stage"
+    } == {
+        key: value
+        for key, value in created_lead.items()
+        if key != "deal_stage"
+    }
+
+
+def test_rejects_invalid_stage_update(client: TestClient) -> None:
+    created_lead = client.post("/api/leads", json=VALID_LEAD).json()
+
+    response = client.patch(
+        f"/api/leads/{created_lead['id']}/stage",
+        json={"deal_stage": "Закрыта"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "deal_stage"]
+
+
+def test_stage_update_returns_not_found(client: TestClient) -> None:
+    response = client.patch(
+        "/api/leads/999/stage",
+        json={"deal_stage": "Отказ"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Lead not found."}
+
+
+def test_updated_stage_appears_in_lead_list(client: TestClient) -> None:
+    created_lead = client.post("/api/leads", json=VALID_LEAD).json()
+    update_response = client.patch(
+        f"/api/leads/{created_lead['id']}/stage",
+        json={"deal_stage": "Назначена консультация"},
+    )
+
+    list_response = client.get("/api/leads")
+
+    assert update_response.status_code == 200
+    assert list_response.status_code == 200
+    assert list_response.json()[0]["deal_stage"] == "Назначена консультация"

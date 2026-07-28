@@ -10,6 +10,12 @@ const saveButton = leadForm.querySelector('button[type="submit"]');
 
 let isSubmitting = false;
 const renderedLeadIds = new Set();
+const dealStages = [
+    "Новый лид",
+    "Квалифицирован",
+    "Назначена консультация",
+    "Отказ",
+];
 
 function showMessage(element, message) {
     element.textContent = message;
@@ -99,10 +105,108 @@ function validateCreatedLead(lead) {
 function createCardRow(label, value) {
     const row = document.createElement("p");
     const labelElement = document.createElement("strong");
+    const valueElement = document.createElement("span");
 
     labelElement.textContent = `${label}: `;
-    row.append(labelElement, document.createTextNode(value));
+    valueElement.textContent = value;
+    row.append(labelElement, valueElement);
     return row;
+}
+
+function setCardRowValue(row, value) {
+    row.querySelector("span").textContent = value;
+}
+
+async function updateStage(leadId, newStage, previousStage, select, stageRow, message) {
+    select.disabled = true;
+    hideMessage(message);
+    message.classList.remove("card-message-error");
+
+    try {
+        const response = await fetch(`/api/leads/${leadId}/stage`, {
+            method: "PATCH",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({deal_stage: newStage}),
+        });
+
+        let updatedLead;
+        try {
+            updatedLead = await response.json();
+        } catch {
+            throw new Error("Сервер вернул некорректный ответ.");
+        }
+
+        if (!response.ok) {
+            const errorText =
+                response.status === 404
+                    ? "Лид не найден. Обновите страницу."
+                    : formatApiError(updatedLead, response.status);
+            throw new Error(errorText);
+        }
+
+        validateCreatedLead(updatedLead);
+        if (updatedLead.id !== leadId) {
+            throw new Error("Сервер вернул данные другого лида.");
+        }
+
+        select.value = updatedLead.deal_stage;
+        setCardRowValue(stageRow, updatedLead.deal_stage);
+        showMessage(message, "Этап сделки обновлён.");
+        return updatedLead.deal_stage;
+    } catch (error) {
+        select.value = previousStage;
+        message.classList.add("card-message-error");
+        showMessage(
+            message,
+            error instanceof TypeError
+                ? "Не удалось связаться с сервером. Этап не изменён."
+                : error.message || "Не удалось изменить этап сделки.",
+        );
+        return previousStage;
+    } finally {
+        select.disabled = false;
+    }
+}
+
+function createStageEditor(lead, stageRow) {
+    const container = document.createElement("div");
+    const label = document.createElement("label");
+    const select = document.createElement("select");
+    const message = document.createElement("p");
+    const selectId = `lead-stage-${lead.id}`;
+    let currentStage = lead.deal_stage;
+
+    container.className = "stage-editor";
+    label.htmlFor = selectId;
+    label.textContent = "Изменить этап";
+    select.id = selectId;
+    select.setAttribute("aria-describedby", `${selectId}-message`);
+    dealStages.forEach((stage) => {
+        const option = document.createElement("option");
+        option.value = stage;
+        option.textContent = stage;
+        select.append(option);
+    });
+    select.value = currentStage;
+
+    message.id = `${selectId}-message`;
+    message.className = "card-message";
+    message.setAttribute("role", "status");
+    message.hidden = true;
+
+    select.addEventListener("change", async () => {
+        currentStage = await updateStage(
+            lead.id,
+            select.value,
+            currentStage,
+            select,
+            stageRow,
+            message,
+        );
+    });
+
+    container.append(label, select, message);
+    return container;
 }
 
 function createLeadCard(lead) {
@@ -110,6 +214,7 @@ function createLeadCard(lead) {
 
     const card = document.createElement("article");
     const title = document.createElement("h3");
+    const stageRow = createCardRow("Этап сделки", lead.deal_stage);
     const createdAt = new Date(lead.created_at);
     const formattedDate = new Intl.DateTimeFormat("ru-RU", {
         dateStyle: "medium",
@@ -123,12 +228,13 @@ function createLeadCard(lead) {
         createCardRow("Телефон", lead.phone),
         createCardRow("Источник лида", lead.lead_source),
         createCardRow("Ответственный", lead.responsible),
-        createCardRow("Этап сделки", lead.deal_stage),
+        stageRow,
         createCardRow(
             "Запрошено ТЗ",
             lead.technical_spec_requested ? "Да" : "Нет",
         ),
         createCardRow("Создан", formattedDate),
+        createStageEditor(lead, stageRow),
     );
 
     return card;

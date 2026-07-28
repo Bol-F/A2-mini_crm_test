@@ -68,5 +68,8 @@ def test_interface_static_assets_are_available(tmp_path: Path) -> None:
     assert "loadLeads();" in script_response.text
     assert "renderedLeadIds" in script_response.text
     assert 'method: "POST"' in script_response.text
+    assert 'method: "PATCH"' in script_response.text
+    assert "/stage`" in script_response.text
+    assert "Изменить этап" in script_response.text
     assert "textContent" in script_response.text
     assert "innerHTML" not in script_response.text

@@ -1,14 +1,26 @@
-import type { DealStage, Lead } from "../types/lead";
+import { ListChecks } from "lucide-react";
+
 import { useLanguage } from "../hooks/useLanguage";
+import type { DealStage, Lead } from "../types/lead";
 import { EmptyState } from "./EmptyState";
 import { ErrorAlert } from "./ErrorAlert";
-import { LeadCard } from "./LeadCard";
+import { LeadMobileCard } from "./LeadMobileCard";
+import { LeadTable } from "./LeadTable";
 import { LoadingState } from "./LoadingState";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Separator } from "./ui/separator";
 
 interface LeadListProps {
   leads: Lead[];
   isLoading: boolean;
   error: string;
+  onRetry: () => void;
   onUpdateStage: (leadId: number, stage: DealStage) => Promise<void>;
 }
 
@@ -16,27 +28,49 @@ export function LeadList({
   leads,
   isLoading,
   error,
+  onRetry,
   onUpdateStage,
 }: LeadListProps) {
   const { t } = useLanguage();
+  const hasLeads = !isLoading && !error && leads.length > 0;
 
   return (
-    <section className="panel" aria-labelledby="saved-leads-title">
-      <h2 id="saved-leads-title">{t("savedLeads")}</h2>
-      {isLoading ? <LoadingState /> : null}
-      {!isLoading ? <ErrorAlert message={error} /> : null}
-      {!isLoading && !error && leads.length === 0 ? <EmptyState /> : null}
-      {!isLoading && !error && leads.length > 0 ? (
-        <div className="lead-cards" aria-live="polite">
-          {leads.map((lead) => (
-            <LeadCard
-              key={lead.id}
-              lead={lead}
-              onUpdateStage={onUpdateStage}
-            />
-          ))}
+    <Card className="min-w-0 shadow-sm" aria-labelledby="saved-leads-title">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <ListChecks aria-hidden="true" className="size-5" />
+          </div>
+          <div>
+            <CardTitle id="saved-leads-title">{t("savedLeads")}</CardTitle>
+            <CardDescription className="mt-1">
+              {t("listDescription")}
+            </CardDescription>
+          </div>
         </div>
-      ) : null}
-    </section>
+      </CardHeader>
+      <Separator />
+      <CardContent className="min-w-0 pt-6">
+        {isLoading ? <LoadingState /> : null}
+        {!isLoading && error ? (
+          <ErrorAlert message={error} onRetry={onRetry} />
+        ) : null}
+        {!isLoading && !error && leads.length === 0 ? <EmptyState /> : null}
+        {hasLeads ? (
+          <div aria-live="polite">
+            <LeadTable leads={leads} onUpdateStage={onUpdateStage} />
+            <div className="space-y-3 md:hidden">
+              {leads.map((lead) => (
+                <LeadMobileCard
+                  key={lead.id}
+                  lead={lead}
+                  onUpdateStage={onUpdateStage}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

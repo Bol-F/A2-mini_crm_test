@@ -21,29 +21,35 @@ export function useLeads() {
 
   useEffect(() => {
     let isActive = true;
+    void getLeads(language)
+      .then((savedLeads) => {
+        if (!isActive) return;
+        setLeads(savedLeads);
+        setLoadError("");
+      })
+      .catch((error: unknown) => {
+        if (isActive) setLoadError(getReadableError(error, t));
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false);
+      });
 
-    async function load() {
-      try {
-        const savedLeads = await getLeads(language);
-        if (isActive) {
-          setLeads(savedLeads);
-          setLoadError("");
-        }
-      } catch (error) {
-        if (isActive) {
-          setLoadError(getReadableError(error, t));
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void load();
     return () => {
       isActive = false;
     };
+  }, [language, t]);
+
+  const reloadLeads = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const savedLeads = await getLeads(language);
+      setLeads(savedLeads);
+    } catch (error) {
+      setLoadError(getReadableError(error, t));
+    } finally {
+      setIsLoading(false);
+    }
   }, [language, t]);
 
   const createLead = useCallback(
@@ -73,5 +79,12 @@ export function useLeads() {
     [language],
   );
 
-  return { leads, isLoading, loadError, createLead, updateStage };
+  return {
+    leads,
+    isLoading,
+    loadError,
+    createLead,
+    updateStage,
+    reloadLeads,
+  };
 }

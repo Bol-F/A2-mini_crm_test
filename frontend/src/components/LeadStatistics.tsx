@@ -1,0 +1,91 @@
+import {
+  CalendarCheck2,
+  ClipboardCheck,
+  ContactRound,
+  UserCheck,
+  UserPlus,
+  UserX,
+  type LucideIcon,
+} from "lucide-react";
+
+import { useLanguage } from "../hooks/useLanguage";
+import type { Lead } from "../types/lead";
+import { Card, CardContent } from "./ui/card";
+
+interface LeadStatisticsProps {
+  leads: Lead[];
+}
+
+interface Statistic {
+  label: string;
+  value: number;
+  icon: LucideIcon;
+  iconClassName: string;
+}
+
+export function LeadStatistics({ leads }: LeadStatisticsProps) {
+  const { t } = useLanguage();
+  const statistics: Statistic[] = [
+    {
+      label: t("totalLeads"),
+      value: leads.length,
+      icon: ContactRound,
+      iconClassName: "bg-primary/10 text-primary",
+    },
+    {
+      label: t("newLeads"),
+      value: leads.filter((lead) => lead.deal_stage === "new").length,
+      icon: UserPlus,
+      iconClassName: "bg-info/10 text-info",
+    },
+    {
+      label: t("qualifiedLeads"),
+      value: leads.filter((lead) => lead.deal_stage === "qualified").length,
+      icon: UserCheck,
+      iconClassName: "bg-success/10 text-success",
+    },
+    {
+      label: t("consultations"),
+      value: leads.filter(
+        (lead) => lead.deal_stage === "consultation_scheduled",
+      ).length,
+      icon: CalendarCheck2,
+      iconClassName: "bg-violet-100 text-violet-700",
+    },
+    {
+      label: t("rejectedLeads"),
+      value: leads.filter((lead) => lead.deal_stage === "rejected").length,
+      icon: UserX,
+      iconClassName: "bg-destructive/10 text-destructive",
+    },
+    {
+      label: t("specifications"),
+      value: leads.filter((lead) => lead.technical_spec_requested).length,
+      icon: ClipboardCheck,
+      iconClassName: "bg-warning/15 text-amber-700",
+    },
+  ];
+
+  return (
+    <section
+      aria-label={t("totalLeads")}
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6"
+    >
+      {statistics.map(({ label, value, icon: Icon, iconClassName }) => (
+        <Card key={label} className="py-4 shadow-none">
+          <CardContent className="flex items-center gap-3 px-4">
+            <div
+              className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${iconClassName}`}
+            >
+              <Icon aria-hidden="true" className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl font-semibold tabular-nums">{value}</p>
+              <p className="truncate text-xs text-muted-foreground">{label}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </section>
+  );
+}

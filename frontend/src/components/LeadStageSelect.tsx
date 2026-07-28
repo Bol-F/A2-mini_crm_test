@@ -1,9 +1,17 @@
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
+import { useLanguage } from "../hooks/useLanguage";
 import { getReadableError } from "../lib/errors";
 import { dealStageLabels } from "../lib/i18n";
 import { DEAL_STAGES, type DealStage } from "../types/lead";
-import { useLanguage } from "../hooks/useLanguage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface LeadStageSelectProps {
   leadId: number;
@@ -22,9 +30,7 @@ export function LeadStageSelect({
   const [isError, setIsError] = useState(false);
 
   async function handleChange(newStage: DealStage) {
-    if (isUpdating || newStage === value) {
-      return;
-    }
+    if (isUpdating || newStage === value) return;
 
     setIsUpdating(true);
     setMessage("");
@@ -34,7 +40,7 @@ export function LeadStageSelect({
       setMessage(t("stageSuccess"));
     } catch (error) {
       setIsError(true);
-      setMessage(getReadableError(error, t) || t("stageError"));
+      setMessage(getReadableError(error, t));
     } finally {
       setIsUpdating(false);
     }
@@ -42,24 +48,35 @@ export function LeadStageSelect({
 
   const messageId = `lead-stage-${leadId}-message`;
   return (
-    <div className="stage-editor">
-      <label htmlFor={`lead-stage-${leadId}`}>{t("changeStage")}</label>
-      <select
-        id={`lead-stage-${leadId}`}
+    <div className="min-w-40">
+      <Select
         value={value}
         disabled={isUpdating}
-        aria-describedby={messageId}
-        onChange={(event) => void handleChange(event.target.value as DealStage)}
+        onValueChange={(stage) => void handleChange(stage as DealStage)}
       >
-        {DEAL_STAGES.map((stage) => (
-          <option key={stage} value={stage}>
-            {dealStageLabels[language][stage]}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          className="w-full bg-card"
+          aria-label={t("changeStage")}
+          aria-describedby={messageId}
+        >
+          {isUpdating ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          ) : null}
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {DEAL_STAGES.map((stage) => (
+            <SelectItem key={stage} value={stage}>
+              {dealStageLabels[language][stage]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <p
         id={messageId}
-        className={isError ? "card-message card-message-error" : "card-message"}
+        className={`mt-1 min-h-4 text-xs ${
+          isError ? "text-destructive" : "text-success"
+        }`}
         role="status"
       >
         {isUpdating ? t("updating") : message}

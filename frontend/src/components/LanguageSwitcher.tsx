@@ -1,19 +1,33 @@
 import { useLanguage } from "../hooks/useLanguage";
 import type { Language } from "../lib/i18n";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export function LanguageSwitcher() {
   const { language, setLanguage, t } = useLanguage();
 
   return (
-    <label className="language-switcher">
-      <span>{t("language")}</span>
-      <select
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-medium text-muted-foreground">
+        {t("language")}
+      </span>
+      <Select
         value={language}
-        onChange={(event) => setLanguage(event.target.value as Language)}
+        onValueChange={(value) => setLanguage(value as Language)}
       >
-        <option value="ru">{t("russian")}</option>
-        <option value="en">{t("english")}</option>
-      </select>
-    </label>
+        <SelectTrigger className="w-32" aria-label={t("language")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="end">
+          <SelectItem value="ru">{t("russian")}</SelectItem>
+          <SelectItem value="en">{t("english")}</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

@@ -27,4 +27,3 @@ def home(request: Request) -> HTMLResponse:
 def health_check() -> HealthResponse:
     """Confirm that the API is available."""
     return HealthResponse(status="ok")
-

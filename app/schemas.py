@@ -54,6 +54,12 @@ class LeadResponse(LeadCreate):
     created_at: datetime
 
 
+class LeadStageUpdate(BaseModel):
+    """A validated deal-stage change."""
+
+    deal_stage: DealStage
+
+
 class HealthResponse(BaseModel):
     """Response returned by the health-check endpoint."""
 

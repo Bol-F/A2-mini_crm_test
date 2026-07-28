@@ -90,6 +90,31 @@ def list_leads(database_path: Path) -> list[dict[str, Any]]:
     return [_row_to_lead(row) for row in rows]
 
 
+def update_lead_stage(
+    database_path: Path,
+    lead_id: int,
+    deal_stage: str,
+) -> dict[str, Any] | None:
+    """Update one lead's deal stage and return the complete saved row."""
+    with get_connection(database_path) as connection:
+        cursor = connection.execute(
+            "UPDATE leads SET deal_stage = ? WHERE id = ?",
+            (deal_stage, lead_id),
+        )
+        if cursor.rowcount == 0:
+            return None
+
+        connection.commit()
+        row = connection.execute(
+            "SELECT * FROM leads WHERE id = ?",
+            (lead_id,),
+        ).fetchone()
+
+    if row is None:
+        raise RuntimeError("The updated lead could not be loaded.")
+    return _row_to_lead(row)
+
+
 def _row_to_lead(row: sqlite3.Row) -> dict[str, Any]:
     """Convert a SQLite row into API-friendly values."""
     lead = dict(row)

@@ -50,7 +50,8 @@ export function LeadStatistics({ leads }: LeadStatisticsProps) {
         (lead) => lead.deal_stage === "consultation_scheduled",
       ).length,
       icon: CalendarCheck2,
-      iconClassName: "bg-violet-100 text-violet-700",
+      iconClassName:
+        "bg-stage-consultation/10 text-stage-consultation",
     },
     {
       label: t("rejectedLeads"),
@@ -62,7 +63,7 @@ export function LeadStatistics({ leads }: LeadStatisticsProps) {
       label: t("specifications"),
       value: leads.filter((lead) => lead.technical_spec_requested).length,
       icon: ClipboardCheck,
-      iconClassName: "bg-warning/15 text-amber-700",
+      iconClassName: "bg-warning/15 text-warning",
     },
   ];
 

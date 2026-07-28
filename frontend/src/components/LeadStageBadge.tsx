@@ -9,11 +9,13 @@ interface LeadStageBadgeProps {
 }
 
 const stageClasses: Record<DealStage, string> = {
-  new: "border-blue-200 bg-blue-50 text-blue-700",
-  qualified: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  new: "border-stage-new/20 bg-stage-new/10 text-stage-new",
+  qualified:
+    "border-stage-qualified/20 bg-stage-qualified/10 text-stage-qualified",
   consultation_scheduled:
-    "border-violet-200 bg-violet-50 text-violet-700",
-  rejected: "border-red-200 bg-red-50 text-red-700",
+    "border-stage-consultation/20 bg-stage-consultation/10 text-stage-consultation",
+  rejected:
+    "border-stage-rejected/20 bg-stage-rejected/10 text-stage-rejected",
 };
 
 export function LeadStageBadge({ stage }: LeadStageBadgeProps) {

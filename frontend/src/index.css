@@ -61,6 +61,10 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
+  --color-stage-new: var(--stage-new);
+  --color-stage-qualified: var(--stage-qualified);
+  --color-stage-consultation: var(--stage-consultation);
+  --color-stage-rejected: var(--stage-rejected);
   --radius-sm: calc(var(--radius) * 0.75);
   --radius-md: calc(var(--radius) * 0.875);
   --radius-lg: var(--radius);

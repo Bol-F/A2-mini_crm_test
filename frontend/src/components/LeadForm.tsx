@@ -132,6 +132,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
               id="client-name"
               name="client_name"
               autoComplete="name"
+              required
               value={form.client_name}
               aria-invalid={Boolean(fieldErrors.client_name)}
               aria-describedby={
@@ -169,6 +170,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
+              required
               value={form.phone}
               aria-invalid={Boolean(fieldErrors.phone)}
               aria-describedby={fieldErrors.phone ? "phone-error" : undefined}

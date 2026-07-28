@@ -27,7 +27,7 @@ export function LeadMobileCard({
   ).format(new Date(lead.created_at));
 
   return (
-    <Card className="gap-4 py-5 shadow-none">
+    <Card role="article" className="gap-4 py-5 shadow-none">
       <CardHeader className="gap-3 px-5">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="min-w-0 break-words text-base">

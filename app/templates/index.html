@@ -1,17 +1,101 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>A2 Mini CRM</title>
+        <title>Мини-CRM — новый лид</title>
+        <link rel="icon" href="data:,">
         <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
     </head>
     <body>
-        <main class="status-card">
-            <h1>A2 Mini CRM</h1>
-            <p>The application is running.</p>
-            <p id="api-status" class="status">Checking API status…</p>
+        <header class="page-header">
+            <div class="page-shell">
+                <p class="eyebrow">Мини-CRM</p>
+                <h1>Добавление лида</h1>
+                <p id="api-status" class="api-status">Проверяем подключение…</p>
+            </div>
+        </header>
+
+        <main class="page-shell page-content">
+            <section class="panel" aria-labelledby="lead-form-title">
+                <h2 id="lead-form-title">Новый лид</h2>
+
+                <div id="form-errors" class="message message-error" role="alert" hidden></div>
+                <div id="save-success" class="message message-success" role="status" hidden></div>
+
+                <form id="lead-form">
+                    <div class="form-grid">
+                        <div class="field field-wide">
+                            <label for="client-name">Имя клиента</label>
+                            <input
+                                id="client-name"
+                                name="client_name"
+                                type="text"
+                                autocomplete="name"
+                                required
+                            >
+                        </div>
+
+                        <div class="field field-wide">
+                            <label for="phone">Номер телефона</label>
+                            <input
+                                id="phone"
+                                name="phone"
+                                type="tel"
+                                autocomplete="tel"
+                                required
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="lead-source">Источник лида</label>
+                            <select id="lead-source" name="lead_source">
+                                <option value="Холодный">Холодный</option>
+                                <option value="Тёплый">Тёплый</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="responsible">Ответственный</label>
+                            <select id="responsible" name="responsible">
+                                <option value="Лидоруб">Лидоруб</option>
+                                <option value="МОП">МОП</option>
+                            </select>
+                        </div>
+
+                        <div class="field field-wide">
+                            <label for="deal-stage">Этап сделки</label>
+                            <select id="deal-stage" name="deal_stage">
+                                <option value="Новый лид">Новый лид</option>
+                                <option value="Квалифицирован">Квалифицирован</option>
+                                <option value="Назначена консультация">Назначена консультация</option>
+                                <option value="Отказ">Отказ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="checkbox-field" for="technical-spec-requested">
+                        <input
+                            id="technical-spec-requested"
+                            name="technical_spec_requested"
+                            type="checkbox"
+                        >
+                        <span>Запрошено ТЗ</span>
+                    </label>
+
+                    <button type="submit">Сохранить</button>
+                </form>
+            </section>
+
+            <section class="panel" aria-labelledby="saved-leads-title">
+                <h2 id="saved-leads-title">Сохранённые лиды</h2>
+                <p id="leads-empty-state" class="empty-state">
+                    Сохранённых лидов пока нет.
+                </p>
+                <div id="lead-cards" class="lead-cards" aria-live="polite"></div>
+            </section>
         </main>
+
         <script src="{{ url_for('static', path='/app.js') }}"></script>
     </body>
 </html>

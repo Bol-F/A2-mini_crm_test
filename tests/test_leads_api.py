@@ -105,3 +105,19 @@ def test_list_leads_newest_first(client: TestClient) -> None:
     assert second_response.status_code == 201
     assert response.status_code == 200
     assert [lead["client_name"] for lead in response.json()] == ["Борис", "Анна"]
+
+
+def test_leads_persist_across_application_restarts(tmp_path: Path) -> None:
+    database_path = tmp_path / "test.sqlite3"
+
+    with TestClient(create_app(database_path)) as first_client:
+        create_response = first_client.post("/api/leads", json=VALID_LEAD)
+
+    with TestClient(create_app(database_path)) as restarted_client:
+        list_response = restarted_client.get("/api/leads")
+
+    assert create_response.status_code == 201
+    assert list_response.status_code == 200
+    assert [lead["id"] for lead in list_response.json()] == [
+        create_response.json()["id"]
+    ]

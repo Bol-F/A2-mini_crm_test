@@ -182,6 +182,13 @@ button:disabled {
     border-radius: 0.5rem;
 }
 
+.loading-state {
+    margin: 0;
+    padding: 1.25rem;
+    text-align: center;
+    color: #5c6678;
+}
+
 .lead-cards {
     display: grid;
     gap: 1rem;

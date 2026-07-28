@@ -3,10 +3,13 @@ const leadForm = document.querySelector("#lead-form");
 const errorMessage = document.querySelector("#form-errors");
 const successMessage = document.querySelector("#save-success");
 const emptyState = document.querySelector("#leads-empty-state");
+const loadingState = document.querySelector("#leads-loading");
+const loadError = document.querySelector("#leads-load-error");
 const leadCards = document.querySelector("#lead-cards");
 const saveButton = leadForm.querySelector('button[type="submit"]');
 
 let isSubmitting = false;
+const renderedLeadIds = new Set();
 
 function showMessage(element, message) {
     element.textContent = message;
@@ -102,7 +105,7 @@ function createCardRow(label, value) {
     return row;
 }
 
-function displayLead(lead) {
+function createLeadCard(lead) {
     validateCreatedLead(lead);
 
     const card = document.createElement("article");
@@ -128,8 +131,74 @@ function displayLead(lead) {
         createCardRow("Создан", formattedDate),
     );
 
-    leadCards.prepend(card);
+    return card;
+}
+
+function renderLead(lead, addToStart = false) {
+    if (renderedLeadIds.has(lead.id)) {
+        return;
+    }
+
+    const card = createLeadCard(lead);
+    renderedLeadIds.add(lead.id);
+    if (addToStart) {
+        leadCards.prepend(card);
+    } else {
+        leadCards.append(card);
+    }
     emptyState.hidden = true;
+}
+
+function renderLeads(leads) {
+    if (!Array.isArray(leads)) {
+        throw new Error("Сервер вернул некорректный список лидов.");
+    }
+
+    leadCards.replaceChildren();
+    renderedLeadIds.clear();
+    leads.forEach((lead) => renderLead(lead));
+    emptyState.hidden = leads.length > 0;
+}
+
+function setLoadingState(isLoading) {
+    loadingState.hidden = !isLoading;
+    leadCards.setAttribute("aria-busy", String(isLoading));
+    if (isLoading) {
+        emptyState.hidden = true;
+        hideMessage(loadError);
+    }
+}
+
+async function loadLeads() {
+    setLoadingState(true);
+
+    try {
+        const response = await fetch("/api/leads");
+        if (!response.ok) {
+            throw new Error("Не удалось загрузить сохранённые лиды.");
+        }
+
+        let leads;
+        try {
+            leads = await response.json();
+        } catch {
+            throw new Error("Сервер вернул некорректный список лидов.");
+        }
+
+        renderLeads(leads);
+    } catch (error) {
+        leadCards.replaceChildren();
+        renderedLeadIds.clear();
+        emptyState.hidden = true;
+        showMessage(
+            loadError,
+            error instanceof TypeError
+                ? "Не удалось связаться с сервером для загрузки лидов."
+                : error.message,
+        );
+    } finally {
+        setLoadingState(false);
+    }
 }
 
 async function submitLead(event) {
@@ -170,7 +239,8 @@ async function submitLead(event) {
             throw new Error(formatApiError(responseData, response.status));
         }
 
-        displayLead(responseData);
+        hideMessage(loadError);
+        renderLead(responseData, true);
         leadForm.reset();
         showMessage(successMessage, "Лид успешно сохранён.");
     } catch (error) {
@@ -206,3 +276,4 @@ async function checkApiHealth() {
 
 leadForm.addEventListener("submit", submitLead);
 checkApiHealth();
+loadLeads();

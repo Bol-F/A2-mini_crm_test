@@ -89,6 +89,15 @@
 
             <section class="panel" aria-labelledby="saved-leads-title">
                 <h2 id="saved-leads-title">Сохранённые лиды</h2>
+                <p id="leads-loading" class="loading-state" role="status" hidden>
+                    Загружаем лиды…
+                </p>
+                <div
+                    id="leads-load-error"
+                    class="message message-error"
+                    role="alert"
+                    hidden
+                ></div>
                 <p id="leads-empty-state" class="empty-state">
                     Сохранённых лидов пока нет.
                 </p>

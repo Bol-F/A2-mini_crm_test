@@ -29,6 +29,8 @@ def test_lead_form_contains_required_russian_fields(tmp_path: Path) -> None:
     assert "Сохранить" in page
     assert "Сохранённые лиды" in page
     assert "Сохранённых лидов пока нет." in page
+    assert "Загружаем лиды…" in page
+    assert 'id="leads-load-error"' in page
     assert '<form id="lead-form" novalidate>' in page
 
 
@@ -63,6 +65,8 @@ def test_interface_static_assets_are_available(tmp_path: Path) -> None:
     assert "@media (max-width: 32rem)" in styles_response.text
     assert script_response.status_code == 200
     assert 'fetch("/api/leads"' in script_response.text
+    assert "loadLeads();" in script_response.text
+    assert "renderedLeadIds" in script_response.text
     assert 'method: "POST"' in script_response.text
     assert "textContent" in script_response.text
     assert "innerHTML" not in script_response.text

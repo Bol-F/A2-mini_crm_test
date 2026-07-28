@@ -9,6 +9,23 @@ from typing import Any
 
 DATABASE_PATH = Path(__file__).resolve().parent.parent / "crm.sqlite3"
 
+LEGACY_ENUM_VALUES = {
+    "lead_source": {
+        "Холодный": "cold",
+        "Тёплый": "warm",
+    },
+    "responsible": {
+        "Лидоруб": "lead_generator",
+        "МОП": "sales_manager",
+    },
+    "deal_stage": {
+        "Новый лид": "new",
+        "Квалифицирован": "qualified",
+        "Назначена консультация": "consultation_scheduled",
+        "Отказ": "rejected",
+    },
+}
+
 
 @contextmanager
 def get_connection(database_path: Path = DATABASE_PATH) -> Iterator[sqlite3.Connection]:
@@ -38,6 +55,12 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
             )
             """
         )
+        for column, value_mapping in LEGACY_ENUM_VALUES.items():
+            for old_value, new_value in value_mapping.items():
+                connection.execute(
+                    f"UPDATE leads SET {column} = ? WHERE {column} = ?",
+                    (new_value, old_value),
+                )
         connection.commit()
 
 

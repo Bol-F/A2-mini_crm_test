@@ -10,24 +10,24 @@ from pydantic import BaseModel, Field, field_validator
 class LeadSource(StrEnum):
     """Allowed ways a lead entered the CRM."""
 
-    COLD = "Холодный"
-    WARM = "Тёплый"
+    COLD = "cold"
+    WARM = "warm"
 
 
 class ResponsibleEmployee(StrEnum):
     """Employees who may be responsible for a lead."""
 
-    LEAD_GENERATOR = "Лидоруб"
-    SALES_MANAGER = "МОП"
+    LEAD_GENERATOR = "lead_generator"
+    SALES_MANAGER = "sales_manager"
 
 
 class DealStage(StrEnum):
     """Allowed stages in the lead workflow."""
 
-    NEW = "Новый лид"
-    QUALIFIED = "Квалифицирован"
-    CONSULTATION_SCHEDULED = "Назначена консультация"
-    REJECTED = "Отказ"
+    NEW = "new"
+    QUALIFIED = "qualified"
+    CONSULTATION_SCHEDULED = "consultation_scheduled"
+    REJECTED = "rejected"
 
 
 class LeadCreate(BaseModel):

@@ -9,9 +9,9 @@ from app.main import create_app
 VALID_LEAD = {
     "client_name": "Анна",
     "phone": "+998 90 123 45 67",
-    "lead_source": "Тёплый",
-    "responsible": "МОП",
-    "deal_stage": "Новый лид",
+    "lead_source": "warm",
+    "responsible": "sales_manager",
+    "deal_stage": "new",
     "technical_spec_requested": True,
 }
 
@@ -68,9 +68,9 @@ def test_rejects_empty_required_text(client: TestClient, field: str) -> None:
 @pytest.mark.parametrize(
     ("field", "value"),
     [
-        ("lead_source", "Реклама"),
-        ("responsible", "Директор"),
-        ("deal_stage", "Закрыта"),
+        ("lead_source", "advertising"),
+        ("responsible", "director"),
+        ("deal_stage", "closed"),
     ],
 )
 def test_rejects_invalid_enum_fields(
@@ -128,12 +128,12 @@ def test_update_lead_stage(client: TestClient) -> None:
 
     response = client.patch(
         f"/api/leads/{created_lead['id']}/stage",
-        json={"deal_stage": "Квалифицирован"},
+        json={"deal_stage": "qualified"},
     )
 
     assert response.status_code == 200
     updated_lead = response.json()
-    assert updated_lead["deal_stage"] == "Квалифицирован"
+    assert updated_lead["deal_stage"] == "qualified"
     assert {
         key: value
         for key, value in updated_lead.items()
@@ -150,7 +150,7 @@ def test_rejects_invalid_stage_update(client: TestClient) -> None:
 
     response = client.patch(
         f"/api/leads/{created_lead['id']}/stage",
-        json={"deal_stage": "Закрыта"},
+        json={"deal_stage": "closed"},
     )
 
     assert response.status_code == 422
@@ -160,7 +160,7 @@ def test_rejects_invalid_stage_update(client: TestClient) -> None:
 def test_stage_update_returns_not_found(client: TestClient) -> None:
     response = client.patch(
         "/api/leads/999/stage",
-        json={"deal_stage": "Отказ"},
+        json={"deal_stage": "rejected"},
     )
 
     assert response.status_code == 404
@@ -171,11 +171,11 @@ def test_updated_stage_appears_in_lead_list(client: TestClient) -> None:
     created_lead = client.post("/api/leads", json=VALID_LEAD).json()
     update_response = client.patch(
         f"/api/leads/{created_lead['id']}/stage",
-        json={"deal_stage": "Назначена консультация"},
+        json={"deal_stage": "consultation_scheduled"},
     )
 
     list_response = client.get("/api/leads")
 
     assert update_response.status_code == 200
     assert list_response.status_code == 200
-    assert list_response.json()[0]["deal_stage"] == "Назначена консультация"
+    assert list_response.json()[0]["deal_stage"] == "consultation_scheduled"

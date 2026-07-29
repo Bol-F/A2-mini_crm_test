@@ -5,8 +5,12 @@ export function LoadingState() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-3" role="status" aria-label={t("loading")}>
-      <span className="sr-only">{t("loading")}</span>
+    <div
+      className="space-y-3"
+      role="status"
+      aria-label={t("leads:status.loading")}
+    >
+      <span className="sr-only">{t("leads:status.loading")}</span>
       {Array.from({ length: 4 }, (_, index) => (
         <div
           key={index}

@@ -4,11 +4,6 @@ import { useState, type FormEvent } from "react";
 import { useLanguage } from "../hooks/useLanguage";
 import { getReadableError } from "../lib/errors";
 import {
-  dealStageLabels,
-  leadSourceLabels,
-  responsibleLabels,
-} from "../lib/i18n";
-import {
   DEAL_STAGES,
   LEAD_SOURCES,
   RESPONSIBLE_EMPLOYEES,
@@ -51,7 +46,7 @@ const initialForm: CreateLeadPayload = {
 };
 
 export function LeadForm({ onCreate }: LeadFormProps) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [form, setForm] = useState<CreateLeadPayload>(initialForm);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [requestError, setRequestError] = useState("");
@@ -62,7 +57,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
     setForm(initialForm);
     setFieldErrors({});
     setRequestError("");
-    setSuccess(showMessage ? t("formReset") : "");
+    setSuccess(showMessage ? t("leads:status.formReset") : "");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -75,8 +70,10 @@ export function LeadForm({ onCreate }: LeadFormProps) {
       phone: form.phone.trim(),
     };
     const errors: FieldErrors = {};
-    if (!payload.client_name) errors.client_name = t("nameRequired");
-    if (!payload.phone) errors.phone = t("phoneRequired");
+    if (!payload.client_name) {
+      errors.client_name = t("validation:clientNameRequired");
+    }
+    if (!payload.phone) errors.phone = t("validation:phoneRequired");
     setFieldErrors(errors);
     setSuccess("");
     setRequestError("");
@@ -86,7 +83,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
     try {
       await onCreate(payload);
       resetForm(false);
-      setSuccess(t("saveSuccess"));
+      setSuccess(t("leads:status.saved"));
     } catch (error) {
       setRequestError(getReadableError(error, t));
     } finally {
@@ -102,9 +99,9 @@ export function LeadForm({ onCreate }: LeadFormProps) {
             <UserPlus aria-hidden="true" className="size-5" />
           </div>
           <div>
-            <CardTitle>{t("newLead")}</CardTitle>
+            <CardTitle>{t("leads:form.title")}</CardTitle>
             <CardDescription className="mt-1">
-              {t("formDescription")}
+              {t("leads:form.description")}
             </CardDescription>
           </div>
         </div>
@@ -126,13 +123,14 @@ export function LeadForm({ onCreate }: LeadFormProps) {
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="client-name">
-              {t("clientName")} <span aria-hidden="true">*</span>
+              {t("leads:form.clientName")} <span aria-hidden="true">*</span>
             </Label>
             <Input
               id="client-name"
               name="client_name"
               autoComplete="name"
               required
+              placeholder={t("leads:form.clientNamePlaceholder")}
               value={form.client_name}
               aria-invalid={Boolean(fieldErrors.client_name)}
               aria-describedby={
@@ -162,7 +160,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="phone">
-              {t("phone")} <span aria-hidden="true">*</span>
+              {t("leads:form.phone")} <span aria-hidden="true">*</span>
             </Label>
             <Input
               id="phone"
@@ -171,6 +169,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
               inputMode="tel"
               autoComplete="tel"
               required
+              placeholder={t("leads:form.phonePlaceholder")}
               value={form.phone}
               aria-invalid={Boolean(fieldErrors.phone)}
               aria-describedby={fieldErrors.phone ? "phone-error" : undefined}
@@ -198,7 +197,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="lead-source">{t("leadSource")}</Label>
+              <Label htmlFor="lead-source">{t("leads:source.label")}</Label>
               <Select
                 value={form.lead_source}
                 onValueChange={(value) =>
@@ -214,7 +213,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
                 <SelectContent>
                   {LEAD_SOURCES.map((source) => (
                     <SelectItem key={source} value={source}>
-                      {leadSourceLabels[language][source]}
+                      {t(`leads:source.${source}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -222,7 +221,9 @@ export function LeadForm({ onCreate }: LeadFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="responsible">{t("responsible")}</Label>
+              <Label htmlFor="responsible">
+                {t("leads:responsible.label")}
+              </Label>
               <Select
                 value={form.responsible}
                 onValueChange={(value) =>
@@ -238,7 +239,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
                 <SelectContent>
                   {RESPONSIBLE_EMPLOYEES.map((responsible) => (
                     <SelectItem key={responsible} value={responsible}>
-                      {responsibleLabels[language][responsible]}
+                      {t(`leads:responsible.${responsible}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -247,7 +248,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="deal-stage">{t("dealStage")}</Label>
+            <Label htmlFor="deal-stage">{t("leads:stage.label")}</Label>
             <Select
               value={form.deal_stage}
               onValueChange={(value) =>
@@ -263,7 +264,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
               <SelectContent>
                 {DEAL_STAGES.map((stage) => (
                   <SelectItem key={stage} value={stage}>
-                    {dealStageLabels[language][stage]}
+                    {t(`leads:stage.${stage}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -272,7 +273,7 @@ export function LeadForm({ onCreate }: LeadFormProps) {
 
           <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/35 p-4">
             <Label htmlFor="technical-spec" className="cursor-pointer">
-              {t("technicalSpec")}
+              {t("leads:form.technicalSpec")}
             </Label>
             <Switch
               id="technical-spec"
@@ -295,11 +296,13 @@ export function LeadForm({ onCreate }: LeadFormProps) {
               onClick={() => resetForm()}
             >
               <RotateCcw aria-hidden="true" />
-              {t("reset")}
+              {t("common:actions.reset")}
             </Button>
             <Button type="submit" disabled={isSaving}>
               <Save aria-hidden="true" />
-              {isSaving ? t("saving") : t("save")}
+              {isSaving
+                ? t("common:actions.saving")
+                : t("common:actions.save")}
             </Button>
           </div>
         </form>

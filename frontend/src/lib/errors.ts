@@ -1,24 +1,25 @@
+import type { TFunction } from "i18next";
+
 import { ApiClientError } from "../api/client";
-import type { LanguageContextValue } from "./language-context";
 
 export function getReadableError(
   error: unknown,
-  t: LanguageContextValue["t"],
+  t: TFunction<readonly ["common", "leads", "validation"]>,
 ): string {
   if (!(error instanceof ApiClientError)) {
-    return t("genericError");
+    return t("common:errors.generic");
   }
   if (error.status === null) {
-    return t("networkError");
+    return t("common:errors.network");
   }
   if (error.message === "malformed_response") {
-    return t("malformedResponse");
+    return t("common:errors.malformedResponse");
   }
   if (error.status === 404) {
-    return t("notFound");
+    return t("common:errors.notFound");
   }
   if (error.status >= 500) {
-    return t("serverError");
+    return t("common:errors.server");
   }
-  return t("genericError");
+  return t("common:errors.generic");
 }

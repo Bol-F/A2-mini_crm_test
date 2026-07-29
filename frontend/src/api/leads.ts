@@ -1,5 +1,4 @@
 import { ApiClientError, apiRequest } from "./client";
-import type { Language } from "../lib/i18n";
 import type {
   CreateLeadPayload,
   DealStage,
@@ -49,8 +48,8 @@ function ensureLead(value: unknown): Lead {
   return value;
 }
 
-export async function getLeads(language: Language): Promise<Lead[]> {
-  const data = await apiRequest<unknown>("/api/leads", language);
+export async function getLeads(): Promise<Lead[]> {
+  const data = await apiRequest<unknown>("/api/leads");
   if (!Array.isArray(data) || !data.every(isLead)) {
     throw new ApiClientError("malformed_response", 200);
   }
@@ -59,9 +58,8 @@ export async function getLeads(language: Language): Promise<Lead[]> {
 
 export async function createLead(
   payload: CreateLeadPayload,
-  language: Language,
 ): Promise<Lead> {
-  const data = await apiRequest<unknown>("/api/leads", language, {
+  const data = await apiRequest<unknown>("/api/leads", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -71,9 +69,8 @@ export async function createLead(
 export async function updateLeadStage(
   leadId: number,
   payload: UpdateLeadStagePayload,
-  language: Language,
 ): Promise<Lead> {
-  const data = await apiRequest<unknown>(`/api/leads/${leadId}/stage`, language, {
+  const data = await apiRequest<unknown>(`/api/leads/${leadId}/stage`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });

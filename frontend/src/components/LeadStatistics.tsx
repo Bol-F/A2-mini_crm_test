@@ -27,25 +27,25 @@ export function LeadStatistics({ leads }: LeadStatisticsProps) {
   const { t } = useLanguage();
   const statistics: Statistic[] = [
     {
-      label: t("totalLeads"),
+      label: t("leads:statistics.total"),
       value: leads.length,
       icon: ContactRound,
       iconClassName: "bg-primary/10 text-primary",
     },
     {
-      label: t("newLeads"),
+      label: t("leads:statistics.new"),
       value: leads.filter((lead) => lead.deal_stage === "new").length,
       icon: UserPlus,
       iconClassName: "bg-info/10 text-info",
     },
     {
-      label: t("qualifiedLeads"),
+      label: t("leads:statistics.qualified"),
       value: leads.filter((lead) => lead.deal_stage === "qualified").length,
       icon: UserCheck,
       iconClassName: "bg-success/10 text-success",
     },
     {
-      label: t("consultations"),
+      label: t("leads:statistics.consultations"),
       value: leads.filter(
         (lead) => lead.deal_stage === "consultation_scheduled",
       ).length,
@@ -54,13 +54,13 @@ export function LeadStatistics({ leads }: LeadStatisticsProps) {
         "bg-stage-consultation/10 text-stage-consultation",
     },
     {
-      label: t("rejectedLeads"),
+      label: t("leads:statistics.rejected"),
       value: leads.filter((lead) => lead.deal_stage === "rejected").length,
       icon: UserX,
       iconClassName: "bg-destructive/10 text-destructive",
     },
     {
-      label: t("specifications"),
+      label: t("leads:statistics.withTechnicalSpec"),
       value: leads.filter((lead) => lead.technical_spec_requested).length,
       icon: ClipboardCheck,
       iconClassName: "bg-warning/15 text-warning",
@@ -69,7 +69,7 @@ export function LeadStatistics({ leads }: LeadStatisticsProps) {
 
   return (
     <section
-      aria-label={t("totalLeads")}
+      aria-label={t("leads:statistics.label")}
       className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6"
     >
       {statistics.map(({ label, value, icon: Icon, iconClassName }) => (

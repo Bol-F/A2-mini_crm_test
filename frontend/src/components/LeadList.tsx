@@ -42,9 +42,14 @@ export function LeadList({
             <ListChecks aria-hidden="true" className="size-5" />
           </div>
           <div>
-            <CardTitle id="saved-leads-title">{t("savedLeads")}</CardTitle>
+            <CardTitle id="saved-leads-title">
+              {t("leads:list.title")}
+            </CardTitle>
             <CardDescription className="mt-1">
-              {t("listDescription")}
+              {t("leads:list.description")}{" "}
+              <span className="font-medium">
+                {t("leads:list.count", { count: leads.length })}
+              </span>
             </CardDescription>
           </div>
         </div>

@@ -21,13 +21,13 @@ export function EmptyState() {
       <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
         <UserRoundPlus aria-hidden="true" className="size-6" />
       </div>
-      <h3 className="font-semibold">{t("emptyTitle")}</h3>
+      <h3 className="font-semibold">{t("leads:empty.title")}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        {t("emptyDescription")}
+        {t("leads:empty.description")}
       </p>
       <Button type="button" className="mt-5" onClick={focusLeadForm}>
         <UserRoundPlus aria-hidden="true" />
-        {t("addFirstLead")}
+        {t("leads:empty.action")}
       </Button>
     </div>
   );

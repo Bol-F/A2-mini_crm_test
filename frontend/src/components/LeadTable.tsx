@@ -1,10 +1,7 @@
 import { ClipboardCheck } from "lucide-react";
 
 import { useLanguage } from "../hooks/useLanguage";
-import {
-  leadSourceLabels,
-  responsibleLabels,
-} from "../lib/i18n";
+import { formatLeadDate } from "../i18n";
 import type { DealStage, Lead } from "../types/lead";
 import { Badge } from "./ui/badge";
 import {
@@ -25,20 +22,19 @@ interface LeadTableProps {
 
 export function LeadTable({ leads, onUpdateStage }: LeadTableProps) {
   const { language, t } = useLanguage();
-  const locale = language === "ru" ? "ru-RU" : "en-US";
 
   return (
     <div className="hidden overflow-x-auto md:block">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t("clientName")}</TableHead>
-            <TableHead>{t("leadSource")}</TableHead>
-            <TableHead>{t("responsible")}</TableHead>
-            <TableHead>{t("stageLabel")}</TableHead>
-            <TableHead>{t("technicalSpecLabel")}</TableHead>
-            <TableHead>{t("created")}</TableHead>
-            <TableHead>{t("actions")}</TableHead>
+            <TableHead>{t("leads:form.clientName")}</TableHead>
+            <TableHead>{t("leads:source.label")}</TableHead>
+            <TableHead>{t("leads:responsible.label")}</TableHead>
+            <TableHead>{t("leads:stage.label")}</TableHead>
+            <TableHead>{t("leads:list.technicalSpec")}</TableHead>
+            <TableHead>{t("leads:list.created")}</TableHead>
+            <TableHead>{t("leads:list.actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,10 +50,10 @@ export function LeadTable({ leads, onUpdateStage }: LeadTableProps) {
                 </a>
               </TableCell>
               <TableCell>
-                {leadSourceLabels[language][lead.lead_source]}
+                {t(`leads:source.${lead.lead_source}`)}
               </TableCell>
               <TableCell>
-                {responsibleLabels[language][lead.responsible]}
+                {t(`leads:responsible.${lead.responsible}`)}
               </TableCell>
               <TableCell>
                 <LeadStageBadge stage={lead.deal_stage} />
@@ -65,14 +61,13 @@ export function LeadTable({ leads, onUpdateStage }: LeadTableProps) {
               <TableCell>
                 <Badge variant="secondary">
                   <ClipboardCheck aria-hidden="true" />
-                  {lead.technical_spec_requested ? t("yes") : t("no")}
+                  {lead.technical_spec_requested
+                    ? t("common:answers.yes")
+                    : t("common:answers.no")}
                 </Badge>
               </TableCell>
               <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                {new Intl.DateTimeFormat(locale, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                }).format(new Date(lead.created_at))}
+                {formatLeadDate(lead.created_at, language)}
               </TableCell>
               <TableCell>
                 <LeadStageSelect

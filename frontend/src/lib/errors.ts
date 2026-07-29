@@ -15,8 +15,16 @@ export function getReadableError(
   if (error.message === "malformed_response") {
     return t("common:errors.malformedResponse");
   }
-  if (error.status === 404) {
-    return t("common:errors.notFound");
+  const apiError = error.data?.error;
+  if (apiError) {
+    if (
+      apiError.code === "VALIDATION_ERROR" &&
+      apiError.fields &&
+      Object.keys(apiError.fields).length > 0
+    ) {
+      return Object.values(apiError.fields).join(" ");
+    }
+    return apiError.message;
   }
   if (error.status >= 500) {
     return t("common:errors.server");

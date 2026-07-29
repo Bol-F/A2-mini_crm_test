@@ -9,6 +9,10 @@ from typing import Any
 
 DATABASE_PATH = Path(__file__).resolve().parent.parent / "crm.sqlite3"
 
+
+class DuplicateLeadError(Exception):
+    """Raised when another lead already uses the normalized phone number."""
+
 LEGACY_ENUM_VALUES = {
     "lead_source": {
         "Холодный": "cold",
@@ -69,6 +73,14 @@ def create_lead(database_path: Path, lead_data: dict[str, Any]) -> dict[str, Any
     created_at = datetime.now(UTC).isoformat()
 
     with get_connection(database_path) as connection:
+        saved_phones = connection.execute("SELECT phone FROM leads").fetchall()
+        normalized_phone = _normalize_phone(str(lead_data["phone"]))
+        if any(
+            _normalize_phone(str(row["phone"])) == normalized_phone
+            for row in saved_phones
+        ):
+            raise DuplicateLeadError
+
         cursor = connection.execute(
             """
             INSERT INTO leads (
@@ -113,6 +125,16 @@ def list_leads(database_path: Path) -> list[dict[str, Any]]:
     return [_row_to_lead(row) for row in rows]
 
 
+def get_lead(database_path: Path, lead_id: int) -> dict[str, Any] | None:
+    """Return one lead or None when its id does not exist."""
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            "SELECT * FROM leads WHERE id = ?",
+            (lead_id,),
+        ).fetchone()
+    return _row_to_lead(row) if row is not None else None
+
+
 def update_lead_stage(
     database_path: Path,
     lead_id: int,
@@ -143,3 +165,8 @@ def _row_to_lead(row: sqlite3.Row) -> dict[str, Any]:
     lead = dict(row)
     lead["technical_spec_requested"] = bool(lead["technical_spec_requested"])
     return lead
+
+
+def _normalize_phone(phone: str) -> str:
+    """Keep digits only when comparing phone numbers for duplicates."""
+    return "".join(character for character in phone if character.isdigit())

@@ -1,8 +1,17 @@
-export interface ApiValidationIssue {
-  loc?: Array<string | number>;
-  msg?: string;
+export type ApiErrorCode =
+  | "VALIDATION_ERROR"
+  | "LEAD_NOT_FOUND"
+  | "DUPLICATE_LEAD"
+  | "INVALID_STAGE_TRANSITION"
+  | "DATABASE_ERROR"
+  | "UNSUPPORTED_OPERATION";
+
+export interface ApiErrorDetail {
+  code: ApiErrorCode;
+  message: string;
+  fields: Record<string, string> | null;
 }
 
 export interface ApiError {
-  detail?: string | ApiValidationIssue[];
+  error?: ApiErrorDetail;
 }

@@ -36,7 +36,10 @@ export async function apiRequest<T>(
         ...options.headers,
       },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
     throw new ApiClientError("network_error", null);
   }
 

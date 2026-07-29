@@ -3,7 +3,10 @@ import type {
   CreateLeadPayload,
   DealStage,
   Lead,
+  LeadFilters,
+  LeadListResponse,
   LeadSource,
+  LeadStageHistory,
   ResponsibleEmployee,
   UpdateLeadStagePayload,
 } from "../types/lead";
@@ -29,6 +32,7 @@ function isLead(value: unknown): value is Lead {
     typeof lead.id === "number" &&
     typeof lead.client_name === "string" &&
     typeof lead.phone === "string" &&
+    typeof lead.phone_normalized === "string" &&
     isAllowedValue<LeadSource>(LEAD_SOURCES, lead.lead_source) &&
     isAllowedValue<ResponsibleEmployee>(
       RESPONSIBLE_EMPLOYEES,
@@ -48,12 +52,45 @@ function ensureLead(value: unknown): Lead {
   return value;
 }
 
-export async function getLeads(): Promise<Lead[]> {
-  const data = await apiRequest<unknown>("/api/leads");
-  if (!Array.isArray(data) || !data.every(isLead)) {
+export function buildLeadQuery(
+  filters: LeadFilters,
+  page: number,
+  pageSize = 20,
+): string {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+    sort: filters.sort,
+    order: filters.order,
+  });
+  for (const key of [
+    "search",
+    "lead_source",
+    "responsible",
+    "deal_stage",
+    "technical_spec_requested",
+  ] as const) {
+    if (filters[key]) params.set(key, filters[key]);
+  }
+  return params.toString();
+}
+
+export async function getLeads(
+  filters: LeadFilters,
+  page: number,
+  signal?: AbortSignal,
+): Promise<LeadListResponse> {
+  const query = buildLeadQuery(filters, page);
+  const data = await apiRequest<unknown>(`/api/leads?${query}`, { signal });
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !Array.isArray((data as LeadListResponse).items) ||
+    !(data as LeadListResponse).items.every(isLead)
+  ) {
     throw new ApiClientError("malformed_response", 200);
   }
-  return data;
+  return data as LeadListResponse;
 }
 
 export async function createLead(
@@ -75,4 +112,17 @@ export async function updateLeadStage(
     body: JSON.stringify(payload),
   });
   return ensureLead(data);
+}
+
+export async function getLeadHistory(
+  leadId: number,
+  signal?: AbortSignal,
+): Promise<LeadStageHistory[]> {
+  const data = await apiRequest<unknown>(`/api/leads/${leadId}/history`, {
+    signal,
+  });
+  if (!Array.isArray(data)) {
+    throw new ApiClientError("malformed_response", 200);
+  }
+  return data as LeadStageHistory[];
 }

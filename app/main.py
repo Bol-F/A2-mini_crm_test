@@ -4,13 +4,15 @@ import sqlite3
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import Response
 
+from app.config import cors_origins_from_environment, database_path_from_environment
 from app.api_errors import (
     ApiError,
     ApiErrorResponse,
@@ -18,23 +20,26 @@ from app.api_errors import (
     api_error_response,
 )
 from app.database import (
-    DATABASE_PATH,
     DuplicateLeadError,
     create_lead,
     get_lead,
     initialize_database,
+    list_lead_history,
     list_leads,
     update_lead_stage,
 )
+from app.domain.lead_stage import is_stage_transition_allowed
 from app.i18n import resolve_language
 from app.schemas import (
     DealStage,
     HealthResponse,
     LeadCreate,
+    LeadListQuery,
+    LeadListResponse,
     LeadResponse,
+    LeadStageHistoryResponse,
     LeadStageUpdate,
 )
-from app.stages import is_stage_transition_allowed
 from app.validation import validation_api_error
 
 LANGUAGE_DESCRIPTION = (
@@ -49,7 +54,7 @@ ERROR_RESPONSES = {
 }
 
 
-def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
+def create_app(database_path: Path | None = None) -> FastAPI:
     """Build an application using the requested SQLite database."""
 
     @asynccontextmanager
@@ -62,13 +67,10 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
         description=LANGUAGE_DESCRIPTION,
         lifespan=lifespan,
     )
-    application.state.database_path = database_path
+    application.state.database_path = database_path or database_path_from_environment()
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-        ],
+        allow_origins=cors_origins_from_environment(),
         allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["Content-Type", "Accept-Language"],
     )
@@ -136,10 +138,16 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
         """Confirm that the API is available."""
         return HealthResponse(status="ok")
 
-    @application.get("/api/leads", response_model=list[LeadResponse])
-    def get_leads(request: Request) -> list[dict[str, object]]:
-        """Return saved leads with the newest first."""
-        return list_leads(request.app.state.database_path)
+    @application.get("/api/leads", response_model=LeadListResponse)
+    def get_leads(
+        request: Request,
+        query: Annotated[LeadListQuery, Query()],
+    ) -> dict[str, object]:
+        """Return safely filtered and paginated leads."""
+        return list_leads(
+            request.app.state.database_path,
+            query.model_dump(mode="python"),
+        )
 
     @application.post(
         "/api/leads",
@@ -160,7 +168,27 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
                 status_code=409,
                 code=ErrorCode.DUPLICATE_LEAD,
                 message_key="errors.duplicate_lead",
+                details={"existing_lead_id": error.existing_lead_id},
             ) from error
+
+    @application.get(
+        "/api/leads/{lead_id}/history",
+        response_model=list[LeadStageHistoryResponse],
+        responses=ERROR_RESPONSES,
+        description=LANGUAGE_DESCRIPTION,
+    )
+    def get_stage_history(
+        lead_id: int,
+        request: Request,
+    ) -> list[dict[str, object]]:
+        """Return stage history newest first."""
+        if get_lead(request.app.state.database_path, lead_id) is None:
+            raise ApiError(
+                status_code=404,
+                code=ErrorCode.LEAD_NOT_FOUND,
+                message_key="errors.lead_not_found",
+            )
+        return list_lead_history(request.app.state.database_path, lead_id)
 
     @application.patch(
         "/api/leads/{lead_id}/stage",
@@ -196,6 +224,7 @@ def create_app(database_path: Path = DATABASE_PATH) -> FastAPI:
         updated_lead = update_lead_stage(
             request.app.state.database_path,
             lead_id,
+            current_stage.value,
             stage_update.deal_stage.value,
         )
         if updated_lead is None:

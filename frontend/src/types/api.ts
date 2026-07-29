@@ -10,6 +10,7 @@ export interface ApiErrorDetail {
   code: ApiErrorCode;
   message: string;
   fields: Record<string, string> | null;
+  details: Record<string, string | number> | null;
 }
 
 export interface ApiError {

@@ -9,11 +9,11 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "../hooks/useLanguage";
-import type { Lead } from "../types/lead";
+import type { LeadSummary } from "../types/lead";
 import { Card, CardContent } from "./ui/card";
 
 interface LeadStatisticsProps {
-  leads: Lead[];
+  summary: LeadSummary;
 }
 
 interface Statistic {
@@ -23,45 +23,43 @@ interface Statistic {
   iconClassName: string;
 }
 
-export function LeadStatistics({ leads }: LeadStatisticsProps) {
+export function LeadStatistics({ summary }: LeadStatisticsProps) {
   const { t } = useLanguage();
   const statistics: Statistic[] = [
     {
       label: t("leads:statistics.total"),
-      value: leads.length,
+      value: summary.total,
       icon: ContactRound,
       iconClassName: "bg-primary/10 text-primary",
     },
     {
       label: t("leads:statistics.new"),
-      value: leads.filter((lead) => lead.deal_stage === "new").length,
+      value: summary.new,
       icon: UserPlus,
       iconClassName: "bg-info/10 text-info",
     },
     {
       label: t("leads:statistics.qualified"),
-      value: leads.filter((lead) => lead.deal_stage === "qualified").length,
+      value: summary.qualified,
       icon: UserCheck,
       iconClassName: "bg-success/10 text-success",
     },
     {
       label: t("leads:statistics.consultations"),
-      value: leads.filter(
-        (lead) => lead.deal_stage === "consultation_scheduled",
-      ).length,
+      value: summary.consultation_scheduled,
       icon: CalendarCheck2,
       iconClassName:
         "bg-stage-consultation/10 text-stage-consultation",
     },
     {
       label: t("leads:statistics.rejected"),
-      value: leads.filter((lead) => lead.deal_stage === "rejected").length,
+      value: summary.rejected,
       icon: UserX,
       iconClassName: "bg-destructive/10 text-destructive",
     },
     {
       label: t("leads:statistics.withTechnicalSpec"),
-      value: leads.filter((lead) => lead.technical_spec_requested).length,
+      value: summary.technical_spec_requested,
       icon: ClipboardCheck,
       iconClassName: "bg-warning/15 text-warning",
     },

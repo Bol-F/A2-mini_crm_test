@@ -1,0 +1,1 @@
+"""Small CRM domain rules."""

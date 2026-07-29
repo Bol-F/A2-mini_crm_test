@@ -20,7 +20,7 @@ def test_lead_persists_through_separate_connections(tmp_path: Path) -> None:
     )
     saved_leads = list_leads(database_path)
 
-    assert saved_leads == [created_lead]
+    assert saved_leads["items"] == [created_lead]
 
 
 def test_legacy_russian_enum_values_are_migrated(tmp_path: Path) -> None:
@@ -54,7 +54,7 @@ def test_legacy_russian_enum_values_are_migrated(tmp_path: Path) -> None:
         connection.commit()
 
     initialize_database(database_path)
-    migrated_lead = list_leads(database_path)[0]
+    migrated_lead = list_leads(database_path)["items"][0]
 
     assert migrated_lead["lead_source"] == "warm"
     assert migrated_lead["responsible"] == "sales_manager"

@@ -1,9 +1,10 @@
-import { CalendarDays, ClipboardCheck, Phone, UserRound } from "lucide-react";
+import { CalendarDays, ClipboardCheck, Eye, Phone, UserRound } from "lucide-react";
 
 import { useLanguage } from "../hooks/useLanguage";
 import { formatLeadDate } from "../i18n";
 import type { DealStage, Lead } from "../types/lead";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { LeadStageBadge } from "./LeadStageBadge";
 import { LeadStageSelect } from "./LeadStageSelect";
@@ -11,11 +12,13 @@ import { LeadStageSelect } from "./LeadStageSelect";
 interface LeadMobileCardProps {
   lead: Lead;
   onUpdateStage: (leadId: number, stage: DealStage) => Promise<void>;
+  onViewDetails: (lead: Lead) => void;
 }
 
 export function LeadMobileCard({
   lead,
   onUpdateStage,
+  onViewDetails,
 }: LeadMobileCardProps) {
   const { language, t } = useLanguage();
   const createdAt = formatLeadDate(lead.created_at, language);
@@ -91,6 +94,9 @@ export function LeadMobileCard({
             value={lead.deal_stage}
             onUpdate={onUpdateStage}
           />
+          <Button className="mt-2 w-full" variant="outline" onClick={() => onViewDetails(lead)}>
+            <Eye /> {t("leads:details.open")}
+          </Button>
         </div>
       </CardContent>
     </Card>

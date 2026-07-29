@@ -1,0 +1,12 @@
+{
+  "name": "a2-mini-crm",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others --names backend,frontend \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "uv run uvicorn app.main:app --reload --port 8000",
+    "dev:frontend": "npm --prefix frontend run dev -- --port 5173"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

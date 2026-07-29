@@ -51,6 +51,31 @@
     "description": "Create the first lead. It will appear here and persist after restart.",
     "action": "Add first lead"
   },
+  "filters": {
+    "search": "Search by name or phone",
+    "all": "All",
+    "requested": "Requirements requested",
+    "notRequested": "Requirements not requested",
+    "sort": "Sort",
+    "newest": "Newest first",
+    "oldest": "Oldest first",
+    "name": "By name",
+    "stage": "By stage",
+    "clear": "Clear filters"
+  },
+  "pagination": {
+    "label": "Lead pages",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{total}}"
+  },
+  "details": {
+    "open": "Open details",
+    "normalizedPhone": "Normalized phone",
+    "history": "Stage history",
+    "loading": "Loading history…",
+    "noHistory": "No stage changes yet"
+  },
   "status": {
     "loading": "Loading leads…",
     "loadError": "Could not load saved leads.",

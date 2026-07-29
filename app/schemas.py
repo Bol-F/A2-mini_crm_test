@@ -65,7 +65,70 @@ class LeadResponse(LeadCreate):
     """A complete lead returned by the API."""
 
     id: int
+    phone_normalized: str
     created_at: datetime
+
+
+class LeadStageHistoryResponse(BaseModel):
+    """One recorded deal-stage change."""
+
+    id: int
+    lead_id: int
+    previous_stage: DealStage
+    new_stage: DealStage
+    changed_at: datetime
+
+
+class PaginationResponse(BaseModel):
+    """Pagination metadata for a lead list."""
+
+    page: int
+    page_size: int
+    total_items: int
+    total_pages: int
+
+
+class LeadSummary(BaseModel):
+    """Counts calculated across every matching filtered lead."""
+
+    total: int
+    new: int
+    qualified: int
+    consultation_scheduled: int
+    rejected: int
+    technical_spec_requested: int
+
+
+class LeadListResponse(BaseModel):
+    """Paginated leads plus accurate matching-result statistics."""
+
+    items: list[LeadResponse]
+    pagination: PaginationResponse
+    summary: LeadSummary
+
+
+class LeadListQuery(BaseModel):
+    """Validated optional filters accepted by GET /api/leads."""
+
+    search: str | None = Field(default=None, max_length=100)
+    lead_source: LeadSource | None = None
+    responsible: ResponsibleEmployee | None = None
+    deal_stage: DealStage | None = None
+    technical_spec_requested: bool | None = None
+    created_from: datetime | None = None
+    created_to: datetime | None = None
+    sort: Literal["created_at", "client_name", "deal_stage"] = "created_at"
+    order: Literal["asc", "desc"] = "desc"
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=20, ge=1, le=100)
+
+    @field_validator("search", mode="before")
+    @classmethod
+    def clean_search(cls, value: object) -> object:
+        """Trim search text and treat an empty search as no filter."""
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
 
 
 class LeadStageUpdate(BaseModel):

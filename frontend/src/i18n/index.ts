@@ -47,16 +47,13 @@ await i18n
       caches: ["localStorage"],
       lookupLocalStorage: "crm.language",
     },
-    saveMissing: import.meta.env.DEV,
-    missingKeyHandler: (_languages, namespace, key) => {
-      if (import.meta.env.DEV) {
-        console.warn(`Missing translation: ${namespace}:${key}`);
-      }
-    },
+    saveMissing: false,
   });
 
 function updateDocumentLanguage(language: string) {
-  document.documentElement.lang = normalizeLanguage(language);
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = normalizeLanguage(language);
+  }
 }
 
 updateDocumentLanguage(i18n.resolvedLanguage ?? i18n.language);

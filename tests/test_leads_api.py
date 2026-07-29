@@ -222,7 +222,10 @@ def test_list_leads_newest_first(client: TestClient) -> None:
     assert first_response.status_code == 201
     assert second_response.status_code == 201
     assert response.status_code == 200
-    assert [lead["client_name"] for lead in response.json()] == ["Борис", "Анна"]
+    assert [lead["client_name"] for lead in response.json()["items"]] == [
+        "Борис",
+        "Анна",
+    ]
 
 
 def test_leads_persist_across_application_restarts(tmp_path: Path) -> None:
@@ -236,7 +239,7 @@ def test_leads_persist_across_application_restarts(tmp_path: Path) -> None:
 
     assert create_response.status_code == 201
     assert list_response.status_code == 200
-    assert [lead["id"] for lead in list_response.json()] == [
+    assert [lead["id"] for lead in list_response.json()["items"]] == [
         create_response.json()["id"]
     ]
 
@@ -341,7 +344,9 @@ def test_updated_stage_appears_in_lead_list(client: TestClient) -> None:
     assert qualified_response.status_code == 200
     assert update_response.status_code == 200
     assert list_response.status_code == 200
-    assert list_response.json()[0]["deal_stage"] == "consultation_scheduled"
+    assert list_response.json()["items"][0]["deal_stage"] == (
+        "consultation_scheduled"
+    )
 
 
 @pytest.mark.parametrize(
@@ -402,7 +407,10 @@ def test_localizes_database_error_without_exposing_details(
     monkeypatch: pytest.MonkeyPatch,
     language: str,
 ) -> None:
-    def fail_to_list(_database_path: Path) -> list[dict[str, object]]:
+    def fail_to_list(
+        _database_path: Path,
+        _filters: dict[str, object],
+    ) -> list[dict[str, object]]:
         raise sqlite3.OperationalError("private SQL and file details")
 
     monkeypatch.setattr(main_module, "list_leads", fail_to_list)

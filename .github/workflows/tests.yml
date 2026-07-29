@@ -1,12 +1,10 @@
-name: Tests
+name: Full-stack checks
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: read
@@ -14,22 +12,9 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Install uv and Python
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          python-version: "3.12"
-          enable-cache: true
-
-      - name: Install locked dependencies
-        run: uv sync --locked
-
-      - name: Run tests
-        run: uv run --frozen pytest
 
       - name: Install Node.js
         uses: actions/setup-node@v6
@@ -46,10 +31,26 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
-      - name: Test frontend translations
+      - name: Type-check frontend
         working-directory: frontend
-        run: npm test
+        run: npm run typecheck
+
+      - name: Test frontend
+        working-directory: frontend
+        run: npm run test
 
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install locked backend dependencies
+        run: uv sync --frozen
+
+      - name: Test backend
+        run: uv run --frozen pytest

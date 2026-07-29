@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { ListChecks } from "lucide-react";
 
 import { useLanguage } from "../hooks/useLanguage";
-import type { DealStage, Lead } from "../types/lead";
+import type { DealStage, Lead, LeadFilters as Filters, Pagination } from "../types/lead";
 import { EmptyState } from "./EmptyState";
 import { ErrorAlert } from "./ErrorAlert";
 import { LeadMobileCard } from "./LeadMobileCard";
+import { LeadDetailsDialog } from "./LeadDetailsDialog";
+import { LeadFilters } from "./LeadFilters";
+import { PaginationControls } from "./PaginationControls";
 import { LeadTable } from "./LeadTable";
 import { LoadingState } from "./LoadingState";
 import {
@@ -22,6 +26,11 @@ interface LeadListProps {
   error: string;
   onRetry: () => void;
   onUpdateStage: (leadId: number, stage: DealStage) => Promise<void>;
+  filters: Filters;
+  pagination: Pagination;
+  onFiltersChange: (filters: Filters) => void;
+  onClearFilters: () => void;
+  onPageChange: (page: number) => void;
 }
 
 export function LeadList({
@@ -30,8 +39,14 @@ export function LeadList({
   error,
   onRetry,
   onUpdateStage,
+  filters,
+  pagination,
+  onFiltersChange,
+  onClearFilters,
+  onPageChange,
 }: LeadListProps) {
   const { t } = useLanguage();
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const hasLeads = !isLoading && !error && leads.length > 0;
 
   return (
@@ -48,7 +63,7 @@ export function LeadList({
             <CardDescription className="mt-1">
               {t("leads:list.description")}{" "}
               <span className="font-medium">
-                {t("leads:list.count", { count: leads.length })}
+                {t("leads:list.count", { count: pagination.total_items })}
               </span>
             </CardDescription>
           </div>
@@ -56,6 +71,8 @@ export function LeadList({
       </CardHeader>
       <Separator />
       <CardContent className="min-w-0 pt-6">
+        <LeadFilters filters={filters} onChange={onFiltersChange} onClear={onClearFilters} />
+        <div className="mt-5">
         {isLoading ? <LoadingState /> : null}
         {!isLoading && error ? (
           <ErrorAlert message={error} onRetry={onRetry} />
@@ -63,19 +80,23 @@ export function LeadList({
         {!isLoading && !error && leads.length === 0 ? <EmptyState /> : null}
         {hasLeads ? (
           <div aria-live="polite">
-            <LeadTable leads={leads} onUpdateStage={onUpdateStage} />
+            <LeadTable leads={leads} onUpdateStage={onUpdateStage} onViewDetails={setSelectedLead} />
             <div className="space-y-3 md:hidden">
               {leads.map((lead) => (
                 <LeadMobileCard
                   key={lead.id}
                   lead={lead}
                   onUpdateStage={onUpdateStage}
+                  onViewDetails={setSelectedLead}
                 />
               ))}
             </div>
           </div>
         ) : null}
+        <PaginationControls pagination={pagination} onPageChange={onPageChange} />
+        </div>
       </CardContent>
+      <LeadDetailsDialog lead={selectedLead} onClose={() => setSelectedLead(null)} />
     </Card>
   );
 }

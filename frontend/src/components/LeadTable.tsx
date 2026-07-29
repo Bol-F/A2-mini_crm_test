@@ -1,9 +1,10 @@
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Eye } from "lucide-react";
 
 import { useLanguage } from "../hooks/useLanguage";
 import { formatLeadDate } from "../i18n";
 import type { DealStage, Lead } from "../types/lead";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import {
   Table,
   TableBody,
@@ -18,9 +19,10 @@ import { LeadStageSelect } from "./LeadStageSelect";
 interface LeadTableProps {
   leads: Lead[];
   onUpdateStage: (leadId: number, stage: DealStage) => Promise<void>;
+  onViewDetails: (lead: Lead) => void;
 }
 
-export function LeadTable({ leads, onUpdateStage }: LeadTableProps) {
+export function LeadTable({ leads, onUpdateStage, onViewDetails }: LeadTableProps) {
   const { language, t } = useLanguage();
 
   return (
@@ -70,11 +72,10 @@ export function LeadTable({ leads, onUpdateStage }: LeadTableProps) {
                 {formatLeadDate(lead.created_at, language)}
               </TableCell>
               <TableCell>
-                <LeadStageSelect
-                  leadId={lead.id}
-                  value={lead.deal_stage}
-                  onUpdate={onUpdateStage}
-                />
+                <div className="flex items-center gap-2">
+                  <LeadStageSelect leadId={lead.id} value={lead.deal_stage} onUpdate={onUpdateStage} />
+                  <Button variant="ghost" size="icon" onClick={() => onViewDetails(lead)} aria-label={t("leads:details.open")}><Eye /></Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

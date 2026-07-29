@@ -32,6 +32,7 @@ const requiredKeys = {
     "language.uz",
     "actions.save",
     "actions.reset",
+    "actions.close",
     "errors.generic",
   ],
   leads: [
@@ -48,6 +49,10 @@ const requiredKeys = {
     "stage.consultation_scheduled",
     "stage.rejected",
     "statistics.total",
+    "filters.search",
+    "filters.clear",
+    "pagination.next",
+    "details.history",
     "list.title",
     "list.count_one",
     "empty.title",

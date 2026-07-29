@@ -14,7 +14,8 @@
     "save": "Save",
     "saving": "Saving…",
     "reset": "Reset",
-    "retry": "Retry"
+    "retry": "Retry",
+    "close": "Close"
   },
   "answers": {
     "yes": "Yes",

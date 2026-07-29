@@ -26,6 +26,7 @@ class ApiErrorDetail(BaseModel):
     code: ErrorCode
     message: str
     fields: dict[str, str] | None = None
+    details: dict[str, int | str] | None = None
 
 
 class ApiErrorResponse(BaseModel):
@@ -44,12 +45,14 @@ class ApiError(Exception):
         code: ErrorCode,
         message_key: str,
         field_keys: dict[str, str] | None = None,
+        details: dict[str, int | str] | None = None,
     ) -> None:
         super().__init__(code.value)
         self.status_code = status_code
         self.code = code
         self.message_key = message_key
         self.field_keys = field_keys
+        self.details = details
 
 
 def request_language(request: Request) -> Language:
@@ -73,6 +76,7 @@ def api_error_response(request: Request, error: ApiError) -> JSONResponse:
             code=error.code,
             message=translate(language, error.message_key),
             fields=fields,
+            details=error.details,
         )
     )
     return JSONResponse(

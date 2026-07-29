@@ -14,7 +14,8 @@
     "save": "Saqlash",
     "saving": "Saqlanmoqda…",
     "reset": "Tozalash",
-    "retry": "Qayta urinish"
+    "retry": "Qayta urinish",
+    "close": "Yopish"
   },
   "answers": {
     "yes": "Ha",

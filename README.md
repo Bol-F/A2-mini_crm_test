@@ -21,10 +21,11 @@ FastAPI API работают на русском, английском и узб
 app/
 ├── main.py                 # FastAPI, CORS и API-маршруты
 ├── api_errors.py           # стабильные коды и единый формат ошибок
-├── database.py             # SQLite, миграция значений и SQL-запросы
+├── config.py               # DATABASE_PATH и безопасный CORS allowlist
+├── database.py             # SQLite, миграции, фильтры и SQL-запросы
+├── domain/lead_stage.py    # допустимые переходы этапов
 ├── i18n/                   # resolver языка и backend-переводы ru/en/uz
 ├── schemas.py              # Pydantic-схемы и стабильные enum-значения
-├── stages.py               # допустимые переходы между этапами
 └── validation.py           # преобразование ошибок Pydantic
 frontend/
 ├── src/api/                # единый HTTP-клиент и функции API
@@ -34,29 +35,49 @@ frontend/
 └── src/types/              # TypeScript-типы API
 tests/                      # изолированные backend-тесты
 .github/workflows/tests.yml # backend-тесты, frontend lint и build
+package.json                # одновременный запуск API и Vite
 ```
 
-## Локальный запуск
+## Архитектура
+
+```text
+Browser (React + i18next + shadcn/ui)
+                 │ /api через Vite proxy
+                 ▼
+FastAPI ──► Pydantic validation ──► domain transition rules
+                 │
+                 ▼
+parameterized sqlite3 queries ──► crm.sqlite3
+                                  ├── leads
+                                  └── lead_stage_history
+```
+
+Frontend отвечает за представление и состояния интерфейса. Backend является
+источником истины для валидации, дублей, переходов, пагинации и статистики.
+
+## Требования и локальный запуск
 
 Потребуются [uv](https://docs.astral.sh/uv/) и Node.js 24 с npm.
 
-Синхронизируйте backend:
+Backend запускается независимо:
 
 ```shell
-uv sync --locked
-```
-
-В первом терминале запустите API:
-
-```shell
+uv sync
 uv run uvicorn app.main:app --reload
 ```
 
-Во втором терминале установите frontend-зависимости и запустите Vite:
+Frontend запускается независимо:
 
 ```shell
 cd frontend
-npm ci
+npm install
+npm run dev
+```
+
+Оба процесса одной командой из корня:
+
+```shell
+npm install
 npm run dev
 ```
 
@@ -65,14 +86,31 @@ npm run dev
 `frontend/.env.example` в `frontend/.env` и измените `VITE_API_BASE_URL`.
 Документация FastAPI доступна по адресу <http://127.0.0.1:8000/docs>.
 
-## Проверки
+### Переменные окружения
+
+Шаблоны находятся в `.env.example` и `frontend/.env.example`; реальные `.env`
+не коммитятся.
+
+| Переменная | Назначение | Значение по умолчанию |
+|---|---|---|
+| `DATABASE_PATH` | путь к SQLite | `crm.sqlite3` |
+| `CORS_ORIGINS` | разрешённые origins через запятую | localhost/127.0.0.1:5173 |
+| `VITE_API_BASE_URL` | базовый URL API в production | пусто |
+| `VITE_PROXY_TARGET` | цель Vite dev proxy | `http://127.0.0.1:8000` |
+
+Wildcard CORS не используется.
+
+## Проверки и production build
 
 ```shell
+uv sync --frozen
 uv run pytest
 cd frontend
-npm test
 npm run lint
+npm run typecheck
+npm run test
 npm run build
+npm run preview
 ```
 
 GitHub Actions выполняет те же проверки из lock-файлов `uv.lock` и
@@ -80,7 +118,8 @@ GitHub Actions выполняет те же проверки из lock-файл�
 
 ## SQLite и значения API
 
-При старте API создаёт `crm.sqlite3` и таблицу `leads`, только если их ещё нет.
+При старте API создаёт `crm.sqlite3`, таблицы `leads` и
+`lead_stage_history`, только если их ещё нет.
 Перезапуск приложения не удаляет записи. Файлы SQLite исключены из Git, а тесты
 используют отдельные временные базы.
 
@@ -101,6 +140,13 @@ API хранит стабильные, независимые от языка и
 | `GET` | `/api/leads` | Получить лиды, новые первыми | `200` |
 | `POST` | `/api/leads` | Создать лид | `201` |
 | `PATCH` | `/api/leads/{lead_id}/stage` | Изменить этап сделки | `200` |
+| `GET` | `/api/leads/{lead_id}/history` | История этапов | `200` |
+
+`GET /api/leads` возвращает `items`, `pagination` и `summary`. Поддерживаются
+`search`, `lead_source`, `responsible`, `deal_stage`,
+`technical_spec_requested`, `created_from`, `created_to`, `sort`, `order`,
+`page` и `page_size` (максимум 100). Статистика относится ко всему
+отфильтрованному результату, а не только к текущей странице.
 
 ### Язык и ошибки API
 
@@ -137,18 +183,23 @@ API хранит стабильные, независимые от языка и
 - `new` → `qualified` или `rejected`;
 - `qualified` → `consultation_scheduled` или `rejected`;
 - `consultation_scheduled` → `rejected`;
+- `rejected` → `new`;
 - повторная установка текущего этапа разрешена.
+
+Реальное изменение этапа и запись истории выполняются одной SQLite
+транзакцией. Повторная установка текущего этапа не создаёт историю.
 
 ## Как работает интерфейс
 
 `frontend/src/components/LeadForm.tsx` проверяет обязательные поля и запускает
 сохранение. Запросы сосредоточены в `frontend/src/api/`, а
-`frontend/src/hooks/useLeads.ts` отвечает за загрузку, создание, устранение
-дублей и изменение этапа.
+`frontend/src/hooks/useLeads.ts` отвечает за загрузку, debounce поиска, отмену
+устаревших запросов, URL-параметры, создание и изменение этапа.
 
 Интерфейс собран из небольшого набора компонентов shadcn/ui. На широком экране
 лиды показаны таблицей, а на мобильном — компактными карточками. Статистика
-рассчитывается из уже загруженных лидов без дополнительного API-запроса.
+приходит с API для всех подходящих лидов. История этапов загружается лениво при
+открытии диалога деталей.
 Цвета, радиусы и семантические состояния заданы CSS-переменными в
 `frontend/src/index.css`.
 
@@ -172,6 +223,13 @@ API хранит стабильные, независимые от языка и
 6. Переключите язык через список в заголовке: данные API останутся прежними, а
    подписи изменятся. Также проверьте узбекский язык и сохранение выбора после
    обновления.
+7. Проверьте поиск, фильтры, сортировку, пагинацию и диалог истории.
+
+## Скриншоты
+
+Перед демонстрацией добавьте актуальные desktop/mobile снимки в
+`docs/screenshots/` и разместите ссылки здесь. Устаревающие фиктивные
+изображения намеренно не добавлены.
 
 ## Использование нейросети
 
@@ -192,4 +250,5 @@ CORS для Vite и миграция старых русских enum-значе
 - Проверка телефона не подтверждает, что номер реально существует.
 - Редактируется только этап сделки.
 - SQLite рассчитан на локальную демонстрацию, а не распределённую нагрузку.
-- Backend и frontend в режиме разработки запускаются отдельными процессами.
+- Нет полнотекстового индекса: поиск рассчитан на объём тестового задания.
+- История содержит изменения, выполненные после появления этой функции.

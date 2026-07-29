@@ -51,6 +51,31 @@
     "description": "Birinchi lidni yarating. U shu yerda ko‘rinadi va qayta ishga tushirilganda saqlanadi.",
     "action": "Birinchi lidni qo‘shish"
   },
+  "filters": {
+    "search": "Ism yoki telefon bo‘yicha qidirish",
+    "all": "Barchasi",
+    "requested": "Texnik topshiriq so‘ralgan",
+    "notRequested": "Texnik topshiriq so‘ralmagan",
+    "sort": "Saralash",
+    "newest": "Avval yangilari",
+    "oldest": "Avval eskilari",
+    "name": "Ism bo‘yicha",
+    "stage": "Bosqich bo‘yicha",
+    "clear": "Filtrlarni tozalash"
+  },
+  "pagination": {
+    "label": "Lid sahifalari",
+    "previous": "Oldingi",
+    "next": "Keyingi",
+    "page": "{{total}} sahifadan {{page}}-sahifa"
+  },
+  "details": {
+    "open": "Tafsilotlarni ochish",
+    "normalizedPhone": "Normallashtirilgan telefon",
+    "history": "Bosqichlar tarixi",
+    "loading": "Tarix yuklanmoqda…",
+    "noHistory": "Bosqich hali o‘zgarmagan"
+  },
   "status": {
     "loading": "Lidlar yuklanmoqda…",
     "loadError": "Saqlangan lidlarni yuklab bo‘lmadi.",

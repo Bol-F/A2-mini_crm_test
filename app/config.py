@@ -16,6 +16,20 @@ def database_path_from_environment() -> Path:
     return Path(configured) if configured else DEFAULT_DATABASE_PATH
 
 
+def database_target_from_environment() -> Path | str:
+    """Prefer hosted Postgres, while retaining SQLite as the local default."""
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if not database_url:
+        return database_path_from_environment()
+
+    scheme = database_url.partition(":")[0].lower()
+    if scheme not in {"postgres", "postgresql"}:
+        raise RuntimeError(
+            "DATABASE_URL must use the postgres:// or postgresql:// scheme."
+        )
+    return database_url
+
+
 def cors_origins_from_environment() -> list[str]:
     """Read a comma-separated allowlist without accepting wildcard origins."""
     configured = os.getenv("CORS_ORIGINS", "").strip()

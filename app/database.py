@@ -1,4 +1,4 @@
-"""SQLite storage helpers for CRM leads."""
+"""SQLite and PostgreSQL storage helpers for CRM leads."""
 
 import math
 import sqlite3
@@ -8,9 +8,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import psycopg
+from psycopg.rows import dict_row
+
 from app.config import DEFAULT_DATABASE_PATH
 
 DATABASE_PATH = DEFAULT_DATABASE_PATH
+DatabaseTarget = Path | str
 
 
 class DuplicateLeadError(Exception):
@@ -48,18 +52,33 @@ LEGACY_ENUM_VALUES = {
 
 SORT_COLUMNS = {
     "created_at": "created_at",
-    "client_name": "client_name COLLATE NOCASE",
+    "client_name": "LOWER(client_name)",
     "deal_stage": "deal_stage",
 }
 
+POSTGRES_SCHEMA_CHECK_SQL = """
+SELECT
+    to_regclass('public.leads') AS leads,
+    to_regclass('public.lead_stage_history') AS lead_stage_history
+"""
+
 
 @contextmanager
-def get_connection(database_path: Path = DATABASE_PATH) -> Iterator[sqlite3.Connection]:
-    """Yield a configured connection and always close it afterwards."""
-    connection = sqlite3.connect(database_path)
-    connection.row_factory = sqlite3.Row
+def get_connection(
+    database_target: DatabaseTarget = DATABASE_PATH,
+) -> Iterator[Any]:
+    """Yield a configured connection and finish its transaction safely."""
+    if _is_postgres(database_target):
+        connection = psycopg.connect(database_target, row_factory=dict_row)
+    else:
+        connection = sqlite3.connect(database_target)
+        connection.row_factory = sqlite3.Row
     try:
         yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
     finally:
         connection.close()
 
@@ -69,9 +88,25 @@ def normalize_phone(phone: str) -> str:
     return "".join(character for character in phone.strip() if character.isdigit())
 
 
-def initialize_database(database_path: Path = DATABASE_PATH) -> None:
+def initialize_database(
+    database_target: DatabaseTarget = DATABASE_PATH,
+) -> None:
     """Create or safely migrate the CRM tables without deleting records."""
-    with get_connection(database_path) as connection:
+    if _is_postgres(database_target):
+        with get_connection(database_target) as connection:
+            row = connection.execute(POSTGRES_SCHEMA_CHECK_SQL).fetchone()
+        if (
+            row is None
+            or row["leads"] is None
+            or row["lead_stage_history"] is None
+        ):
+            raise RuntimeError(
+                "The PostgreSQL schema is not initialized. "
+                "Apply the Supabase migrations before starting the app."
+            )
+        return
+
+    with get_connection(database_target) as connection:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS leads (
@@ -127,16 +162,62 @@ def initialize_database(database_path: Path = DATABASE_PATH) -> None:
             "CREATE INDEX IF NOT EXISTS idx_history_lead_id "
             "ON lead_stage_history (lead_id, changed_at DESC, id DESC)"
         )
-        connection.commit()
 
 
-def create_lead(database_path: Path, lead_data: dict[str, Any]) -> dict[str, Any]:
+def create_lead(
+    database_target: DatabaseTarget,
+    lead_data: dict[str, Any],
+) -> dict[str, Any]:
     """Insert a lead after checking its normalized phone."""
-    created_at = datetime.now(UTC).isoformat()
+    created_at = (
+        datetime.now(UTC)
+        if _is_postgres(database_target)
+        else datetime.now(UTC).isoformat()
+    )
     phone = str(lead_data["phone"]).strip()
     phone_normalized = normalize_phone(phone)
 
-    with get_connection(database_path) as connection:
+    with get_connection(database_target) as connection:
+        if _is_postgres(database_target):
+            row = connection.execute(
+                """
+                INSERT INTO leads (
+                    client_name,
+                    phone,
+                    phone_normalized,
+                    lead_source,
+                    responsible,
+                    deal_stage,
+                    technical_spec_requested,
+                    created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (phone_normalized) DO NOTHING
+                RETURNING *
+                """,
+                (
+                    lead_data["client_name"],
+                    phone,
+                    phone_normalized,
+                    lead_data["lead_source"],
+                    lead_data["responsible"],
+                    lead_data["deal_stage"],
+                    bool(lead_data["technical_spec_requested"]),
+                    created_at,
+                ),
+            ).fetchone()
+            if row is None:
+                duplicate = connection.execute(
+                    "SELECT id FROM leads WHERE phone_normalized = %s",
+                    (phone_normalized,),
+                ).fetchone()
+                if duplicate is None:
+                    raise RuntimeError(
+                        "The duplicate lead could not be loaded."
+                    )
+                raise DuplicateLeadError(int(duplicate["id"]))
+            return _row_to_lead(row)
+
         duplicate = connection.execute(
             "SELECT id FROM leads WHERE phone_normalized = ? LIMIT 1",
             (phone_normalized,),
@@ -169,7 +250,6 @@ def create_lead(database_path: Path, lead_data: dict[str, Any]) -> dict[str, Any
                 created_at,
             ),
         )
-        connection.commit()
         row = connection.execute(
             "SELECT * FROM leads WHERE id = ?",
             (cursor.lastrowid,),
@@ -181,7 +261,7 @@ def create_lead(database_path: Path, lead_data: dict[str, Any]) -> dict[str, Any
 
 
 def list_leads(
-    database_path: Path,
+    database_target: DatabaseTarget,
     filters: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return safely filtered, sorted, paginated leads and matching summaries."""
@@ -192,26 +272,32 @@ def list_leads(
         "page_size": 20,
         **(filters or {}),
     }
-    where_sql, parameters = _build_filters(filters)
+    placeholder = _placeholder(database_target)
+    where_sql, parameters = _build_filters(
+        filters,
+        placeholder,
+        _is_postgres(database_target),
+    )
     page = int(filters["page"])
     page_size = int(filters["page_size"])
     offset = (page - 1) * page_size
     sort_column = SORT_COLUMNS[str(filters["sort"])]
     direction = "ASC" if filters["order"] == "asc" else "DESC"
 
-    with get_connection(database_path) as connection:
-        total_items = int(
-            connection.execute(
-                f"SELECT COUNT(*) FROM leads {where_sql}",
-                parameters,
-            ).fetchone()[0]
-        )
+    with get_connection(database_target) as connection:
+        count_row = connection.execute(
+            f"SELECT COUNT(*) AS count FROM leads {where_sql}",
+            parameters,
+        ).fetchone()
+        if count_row is None:
+            raise RuntimeError("The lead count could not be loaded.")
+        total_items = int(count_row["count"])
         rows = connection.execute(
             f"""
             SELECT * FROM leads
             {where_sql}
             ORDER BY {sort_column} {direction}, id {direction}
-            LIMIT ? OFFSET ?
+            LIMIT {placeholder} OFFSET {placeholder}
             """,
             (*parameters, page_size, offset),
         ).fetchall()
@@ -226,13 +312,15 @@ def list_leads(
                     THEN 1 ELSE 0 END) AS consultation_scheduled,
                 SUM(CASE WHEN deal_stage = 'rejected' THEN 1 ELSE 0 END)
                     AS rejected,
-                SUM(CASE WHEN technical_spec_requested = 1
+                SUM(CASE WHEN technical_spec_requested
                     THEN 1 ELSE 0 END) AS technical_spec_requested
             FROM leads
             {where_sql}
             """,
             parameters,
         ).fetchone()
+        if summary_row is None:
+            raise RuntimeError("The lead summary could not be loaded.")
 
     summary = {
         key: int(summary_row[key] or 0)
@@ -257,26 +345,31 @@ def list_leads(
     }
 
 
-def get_lead(database_path: Path, lead_id: int) -> dict[str, Any] | None:
+def get_lead(
+    database_target: DatabaseTarget,
+    lead_id: int,
+) -> dict[str, Any] | None:
     """Return one lead or None when its id does not exist."""
-    with get_connection(database_path) as connection:
+    placeholder = _placeholder(database_target)
+    with get_connection(database_target) as connection:
         row = connection.execute(
-            "SELECT * FROM leads WHERE id = ?",
+            f"SELECT * FROM leads WHERE id = {placeholder}",
             (lead_id,),
         ).fetchone()
     return _row_to_lead(row) if row is not None else None
 
 
 def list_lead_history(
-    database_path: Path,
+    database_target: DatabaseTarget,
     lead_id: int,
 ) -> list[dict[str, Any]]:
     """Return one lead's stage changes with the newest change first."""
-    with get_connection(database_path) as connection:
+    placeholder = _placeholder(database_target)
+    with get_connection(database_target) as connection:
         rows = connection.execute(
-            """
+            f"""
             SELECT * FROM lead_stage_history
-            WHERE lead_id = ?
+            WHERE lead_id = {placeholder}
             ORDER BY changed_at DESC, id DESC
             """,
             (lead_id,),
@@ -285,40 +378,43 @@ def list_lead_history(
 
 
 def update_lead_stage(
-    database_path: Path,
+    database_target: DatabaseTarget,
     lead_id: int,
     previous_stage: str,
     new_stage: str,
 ) -> dict[str, Any] | None:
     """Update a stage and record history atomically; no-op on the same stage."""
     if previous_stage == new_stage:
-        return get_lead(database_path, lead_id)
+        return get_lead(database_target, lead_id)
 
-    changed_at = datetime.now(UTC).isoformat()
-    with get_connection(database_path) as connection:
-        try:
-            cursor = connection.execute(
-                "UPDATE leads SET deal_stage = ? WHERE id = ? AND deal_stage = ?",
-                (new_stage, lead_id, previous_stage),
+    changed_at = (
+        datetime.now(UTC)
+        if _is_postgres(database_target)
+        else datetime.now(UTC).isoformat()
+    )
+    placeholder = _placeholder(database_target)
+    with get_connection(database_target) as connection:
+        cursor = connection.execute(
+            "UPDATE leads SET deal_stage = "
+            f"{placeholder} WHERE id = {placeholder} "
+            f"AND deal_stage = {placeholder}",
+            (new_stage, lead_id, previous_stage),
+        )
+        if cursor.rowcount == 0:
+            return None
+        connection.execute(
+            """
+            INSERT INTO lead_stage_history (
+                lead_id, previous_stage, new_stage, changed_at
             )
-            if cursor.rowcount == 0:
-                connection.rollback()
-                return None
-            connection.execute(
-                """
-                INSERT INTO lead_stage_history (
-                    lead_id, previous_stage, new_stage, changed_at
-                )
-                VALUES (?, ?, ?, ?)
-                """,
-                (lead_id, previous_stage, new_stage, changed_at),
-            )
-            connection.commit()
-        except Exception:
-            connection.rollback()
-            raise
+            VALUES (
+            """
+            + ", ".join([placeholder] * 4)
+            + ")",
+            (lead_id, previous_stage, new_stage, changed_at),
+        )
         row = connection.execute(
-            "SELECT * FROM leads WHERE id = ?",
+            f"SELECT * FROM leads WHERE id = {placeholder}",
             (lead_id,),
         ).fetchone()
 
@@ -327,7 +423,11 @@ def update_lead_stage(
     return _row_to_lead(row)
 
 
-def _build_filters(filters: dict[str, Any]) -> tuple[str, tuple[Any, ...]]:
+def _build_filters(
+    filters: dict[str, Any],
+    placeholder: str = "?",
+    is_postgres: bool = False,
+) -> tuple[str, tuple[Any, ...]]:
     clauses: list[str] = []
     parameters: list[Any] = []
 
@@ -336,32 +436,48 @@ def _build_filters(filters: dict[str, Any]) -> tuple[str, tuple[Any, ...]]:
         escaped_search = _escape_like(str(search).lower())
         normalized_search = normalize_phone(str(search))
         search_clauses = [
-            "LOWER(client_name) LIKE ? ESCAPE '\\'",
-            "LOWER(phone) LIKE ? ESCAPE '\\'",
+            f"LOWER(client_name) LIKE {placeholder} ESCAPE '\\'",
+            f"LOWER(phone) LIKE {placeholder} ESCAPE '\\'",
         ]
         parameters.extend([f"%{escaped_search}%", f"%{escaped_search}%"])
         if normalized_search:
-            search_clauses.append("phone_normalized LIKE ? ESCAPE '\\'")
+            search_clauses.append(
+                f"phone_normalized LIKE {placeholder} ESCAPE '\\'"
+            )
             parameters.append(f"%{_escape_like(normalized_search)}%")
         clauses.append(f"({' OR '.join(search_clauses)})")
 
     for field in ("lead_source", "responsible", "deal_stage"):
         value = filters.get(field)
         if value is not None:
-            clauses.append(f"{field} = ?")
+            clauses.append(f"{field} = {placeholder}")
             parameters.append(str(value))
 
     technical_spec_requested = filters.get("technical_spec_requested")
     if technical_spec_requested is not None:
-        clauses.append("technical_spec_requested = ?")
-        parameters.append(int(technical_spec_requested))
+        clauses.append(
+            f"technical_spec_requested = {placeholder}"
+        )
+        parameters.append(
+            bool(technical_spec_requested)
+            if is_postgres
+            else int(technical_spec_requested)
+        )
 
     if filters.get("created_from") is not None:
-        clauses.append("created_at >= ?")
-        parameters.append(filters["created_from"].isoformat())
+        clauses.append(f"created_at >= {placeholder}")
+        parameters.append(
+            filters["created_from"]
+            if is_postgres
+            else filters["created_from"].isoformat()
+        )
     if filters.get("created_to") is not None:
-        clauses.append("created_at <= ?")
-        parameters.append(filters["created_to"].isoformat())
+        clauses.append(f"created_at <= {placeholder}")
+        parameters.append(
+            filters["created_to"]
+            if is_postgres
+            else filters["created_to"].isoformat()
+        )
 
     return (
         f"WHERE {' AND '.join(clauses)}" if clauses else "",
@@ -373,7 +489,17 @@ def _escape_like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def _row_to_lead(row: sqlite3.Row) -> dict[str, Any]:
+def _is_postgres(database_target: DatabaseTarget) -> bool:
+    return isinstance(database_target, str) and database_target.lower().startswith(
+        ("postgresql://", "postgres://")
+    )
+
+
+def _placeholder(database_target: DatabaseTarget) -> str:
+    return "%s" if _is_postgres(database_target) else "?"
+
+
+def _row_to_lead(row: Any) -> dict[str, Any]:
     lead = dict(row)
     lead["technical_spec_requested"] = bool(lead["technical_spec_requested"])
     lead["phone_normalized"] = str(

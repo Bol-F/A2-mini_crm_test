@@ -328,6 +328,28 @@ def test_localizes_invalid_stage_transition(
     )
 
 
+def test_concurrent_stage_change_returns_conflict(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created_lead = client.post("/api/leads", json=VALID_LEAD).json()
+    monkeypatch.setattr(main_module, "update_lead_stage", lambda *_args: None)
+
+    response = client.patch(
+        f"/api/leads/{created_lead['id']}/stage",
+        json={"deal_stage": "qualified"},
+        headers={"Accept-Language": "en"},
+    )
+
+    assert_error(
+        response,
+        status_code=409,
+        code="INVALID_STAGE_TRANSITION",
+        message=LANGUAGE_MESSAGES["en"]["transition"],
+        language="en",
+    )
+
+
 def test_updated_stage_appears_in_lead_list(client: TestClient) -> None:
     created_lead = client.post("/api/leads", json=VALID_LEAD).json()
     qualified_response = client.patch(

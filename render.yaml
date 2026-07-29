@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: a2-mini-crm-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: uv sync --frozen --no-dev
+    startCommand: >-
+      uv run --no-sync uvicorn app.main:app
+      --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

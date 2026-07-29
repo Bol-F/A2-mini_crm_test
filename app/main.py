@@ -6,13 +6,17 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
+import psycopg
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import Response
 
-from app.config import cors_origins_from_environment, database_path_from_environment
+from app.config import (
+    cors_origins_from_environment,
+    database_target_from_environment,
+)
 from app.api_errors import (
     ApiError,
     ApiErrorResponse,
@@ -59,7 +63,7 @@ def create_app(database_path: Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        initialize_database(application.state.database_path)
+        initialize_database(application.state.database_target)
         yield
 
     application = FastAPI(
@@ -67,7 +71,9 @@ def create_app(database_path: Path | None = None) -> FastAPI:
         description=LANGUAGE_DESCRIPTION,
         lifespan=lifespan,
     )
-    application.state.database_path = database_path or database_path_from_environment()
+    application.state.database_target = (
+        database_path or database_target_from_environment()
+    )
     application.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins_from_environment(),
@@ -122,6 +128,7 @@ def create_app(database_path: Path | None = None) -> FastAPI:
         )
 
     @application.exception_handler(sqlite3.Error)
+    @application.exception_handler(psycopg.Error)
     @application.exception_handler(RuntimeError)
     async def handle_database_error(request: Request, _error: Exception):
         return api_error_response(
@@ -145,7 +152,7 @@ def create_app(database_path: Path | None = None) -> FastAPI:
     ) -> dict[str, object]:
         """Return safely filtered and paginated leads."""
         return list_leads(
-            request.app.state.database_path,
+            request.app.state.database_target,
             query.model_dump(mode="python"),
         )
 
@@ -160,7 +167,7 @@ def create_app(database_path: Path | None = None) -> FastAPI:
         """Validate and save a new lead."""
         try:
             return create_lead(
-                request.app.state.database_path,
+                request.app.state.database_target,
                 lead.model_dump(mode="json"),
             )
         except DuplicateLeadError as error:
@@ -182,13 +189,13 @@ def create_app(database_path: Path | None = None) -> FastAPI:
         request: Request,
     ) -> list[dict[str, object]]:
         """Return stage history newest first."""
-        if get_lead(request.app.state.database_path, lead_id) is None:
+        if get_lead(request.app.state.database_target, lead_id) is None:
             raise ApiError(
                 status_code=404,
                 code=ErrorCode.LEAD_NOT_FOUND,
                 message_key="errors.lead_not_found",
             )
-        return list_lead_history(request.app.state.database_path, lead_id)
+        return list_lead_history(request.app.state.database_target, lead_id)
 
     @application.patch(
         "/api/leads/{lead_id}/stage",
@@ -202,7 +209,7 @@ def create_app(database_path: Path | None = None) -> FastAPI:
         request: Request,
     ) -> dict[str, object]:
         """Change a lead's deal stage."""
-        current_lead = get_lead(request.app.state.database_path, lead_id)
+        current_lead = get_lead(request.app.state.database_target, lead_id)
         if current_lead is None:
             raise ApiError(
                 status_code=404,
@@ -222,12 +229,18 @@ def create_app(database_path: Path | None = None) -> FastAPI:
             )
 
         updated_lead = update_lead_stage(
-            request.app.state.database_path,
+            request.app.state.database_target,
             lead_id,
             current_stage.value,
             stage_update.deal_stage.value,
         )
         if updated_lead is None:
+            if get_lead(request.app.state.database_target, lead_id) is not None:
+                raise ApiError(
+                    status_code=409,
+                    code=ErrorCode.INVALID_STAGE_TRANSITION,
+                    message_key="errors.invalid_stage_transition",
+                )
             raise ApiError(
                 status_code=404,
                 code=ErrorCode.LEAD_NOT_FOUND,

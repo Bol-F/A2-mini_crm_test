@@ -1,0 +1,35 @@
+{
+  "errors": {
+    "validation": "Kiritilgan ma’lumotlarni tekshiring",
+    "lead_not_found": "Lid topilmadi",
+    "duplicate_lead": "Bu telefon raqamli lid allaqachon mavjud",
+    "invalid_stage_transition": "Bitim bosqichlari orasidagi o‘tishga ruxsat berilmagan",
+    "database": "Ma’lumotlar bilan amalni bajarib bo‘lmadi",
+    "unsupported_operation": "Bu amal qo‘llab-quvvatlanmaydi"
+  },
+  "fields": {
+    "client_name": {
+      "required": "Mijoz ismi majburiy"
+    },
+    "phone": {
+      "required": "Telefon raqami majburiy",
+      "invalid": "To‘g‘ri telefon raqamini kiriting"
+    },
+    "lead_source": {
+      "invalid": "To‘g‘ri lid manbasini tanlang"
+    },
+    "responsible": {
+      "invalid": "To‘g‘ri mas’ul xodimni tanlang"
+    },
+    "deal_stage": {
+      "invalid": "To‘g‘ri bitim bosqichini tanlang"
+    },
+    "request": {
+      "invalid": "So‘rov formatini tekshiring"
+    }
+  },
+  "messages": {
+    "lead_created": "Lid yaratildi",
+    "stage_updated": "Bitim bosqichi yangilandi"
+  }
+}

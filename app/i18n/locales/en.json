@@ -1,0 +1,35 @@
+{
+  "errors": {
+    "validation": "Check the submitted data",
+    "lead_not_found": "Lead not found",
+    "duplicate_lead": "A lead with this phone number already exists",
+    "invalid_stage_transition": "This deal stage transition is not allowed",
+    "database": "The data operation could not be completed",
+    "unsupported_operation": "This operation is not supported"
+  },
+  "fields": {
+    "client_name": {
+      "required": "Client name is required"
+    },
+    "phone": {
+      "required": "Phone number is required",
+      "invalid": "Enter a valid phone number"
+    },
+    "lead_source": {
+      "invalid": "Select a valid lead source"
+    },
+    "responsible": {
+      "invalid": "Select a valid responsible employee"
+    },
+    "deal_stage": {
+      "invalid": "Select a valid deal stage"
+    },
+    "request": {
+      "invalid": "Check the request format"
+    }
+  },
+  "messages": {
+    "lead_created": "Lead created",
+    "stage_updated": "Deal stage updated"
+  }
+}

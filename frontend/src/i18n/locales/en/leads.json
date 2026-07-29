@@ -1,0 +1,63 @@
+{
+  "form": {
+    "title": "New lead",
+    "description": "Add a contact and assign a responsible employee.",
+    "clientName": "Client name",
+    "clientNamePlaceholder": "Enter the client name",
+    "phone": "Phone number",
+    "phonePlaceholder": "+998 90 123 45 67",
+    "technicalSpec": "Technical requirements requested"
+  },
+  "source": {
+    "label": "Lead source",
+    "cold": "Cold",
+    "warm": "Warm"
+  },
+  "responsible": {
+    "label": "Responsible employee",
+    "lead_generator": "Lead generator",
+    "sales_manager": "Sales manager"
+  },
+  "stage": {
+    "label": "Deal stage",
+    "new": "New lead",
+    "qualified": "Qualified",
+    "consultation_scheduled": "Consultation scheduled",
+    "rejected": "Rejected",
+    "change": "Change stage"
+  },
+  "statistics": {
+    "label": "Lead statistics",
+    "total": "Total leads",
+    "new": "New",
+    "qualified": "Qualified",
+    "consultations": "Consultations",
+    "rejected": "Rejected",
+    "withTechnicalSpec": "With requirements"
+  },
+  "list": {
+    "title": "Saved leads",
+    "description": "Current leads sorted from newest to oldest.",
+    "count_zero": "No saved leads",
+    "count_one": "{{count}} saved lead",
+    "count_other": "{{count}} saved leads",
+    "phone": "Phone",
+    "technicalSpec": "Technical requirements requested",
+    "created": "Created",
+    "actions": "Actions"
+  },
+  "empty": {
+    "title": "No leads yet",
+    "description": "Create the first lead. It will appear here and persist after restart.",
+    "action": "Add first lead"
+  },
+  "status": {
+    "loading": "Loading leads…",
+    "loadError": "Could not load saved leads.",
+    "saved": "Lead saved successfully.",
+    "formReset": "Form cleared.",
+    "updatingStage": "Updating…",
+    "stageUpdated": "Deal stage updated.",
+    "stageUpdateError": "Could not update the deal stage."
+  }
+}

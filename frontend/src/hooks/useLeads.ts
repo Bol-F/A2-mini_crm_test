@@ -21,7 +21,7 @@ export function useLeads() {
 
   useEffect(() => {
     let isActive = true;
-    void getLeads(language)
+    void getLeads()
       .then((savedLeads) => {
         if (!isActive) return;
         setLeads(savedLeads);
@@ -43,40 +43,38 @@ export function useLeads() {
     setIsLoading(true);
     setLoadError("");
     try {
-      const savedLeads = await getLeads(language);
+      const savedLeads = await getLeads();
       setLeads(savedLeads);
     } catch (error) {
       setLoadError(getReadableError(error, t));
     } finally {
       setIsLoading(false);
     }
-  }, [language, t]);
+  }, [t]);
 
   const createLead = useCallback(
     async (payload: CreateLeadPayload) => {
-      const createdLead = await createLeadRequest(payload, language);
+      const createdLead = await createLeadRequest(payload);
       setLeads((currentLeads) => [
         createdLead,
         ...currentLeads.filter((lead) => lead.id !== createdLead.id),
       ]);
     },
-    [language],
+    [],
   );
 
   const updateStage = useCallback(
     async (leadId: number, dealStage: DealStage) => {
-      const updatedLead = await updateLeadStageRequest(
-        leadId,
-        { deal_stage: dealStage },
-        language,
-      );
+      const updatedLead = await updateLeadStageRequest(leadId, {
+        deal_stage: dealStage,
+      });
       setLeads((currentLeads) =>
         currentLeads.map((lead) =>
           lead.id === updatedLead.id ? updatedLead : lead,
         ),
       );
     },
-    [language],
+    [],
   );
 
   return {

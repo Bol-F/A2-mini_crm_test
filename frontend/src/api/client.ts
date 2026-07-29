@@ -1,4 +1,4 @@
-import type { Language } from "../lib/i18n";
+import { getCurrentLanguage } from "../i18n";
 import type { ApiError } from "../types/api";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -21,7 +21,6 @@ export class ApiClientError extends Error {
 
 export async function apiRequest<T>(
   path: string,
-  language: Language,
   options: RequestInit = {},
 ): Promise<T> {
   let response: Response;
@@ -30,7 +29,7 @@ export async function apiRequest<T>(
       ...options,
       headers: {
         Accept: "application/json",
-        "Accept-Language": language,
+        "Accept-Language": getCurrentLanguage(),
         ...(options.body === undefined
           ? {}
           : { "Content-Type": "application/json" }),

@@ -3,7 +3,6 @@ import { useState } from "react";
 
 import { useLanguage } from "../hooks/useLanguage";
 import { getReadableError } from "../lib/errors";
-import { dealStageLabels } from "../lib/i18n";
 import { DEAL_STAGES, type DealStage } from "../types/lead";
 import {
   Select,
@@ -24,7 +23,7 @@ export function LeadStageSelect({
   value,
   onUpdate,
 }: LeadStageSelectProps) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
@@ -37,7 +36,7 @@ export function LeadStageSelect({
     setIsError(false);
     try {
       await onUpdate(leadId, newStage);
-      setMessage(t("stageSuccess"));
+      setMessage(t("leads:status.stageUpdated"));
     } catch (error) {
       setIsError(true);
       setMessage(getReadableError(error, t));
@@ -56,7 +55,7 @@ export function LeadStageSelect({
       >
         <SelectTrigger
           className="w-full bg-card"
-          aria-label={t("changeStage")}
+          aria-label={t("leads:stage.change")}
           aria-describedby={messageId}
         >
           {isUpdating ? (
@@ -67,7 +66,7 @@ export function LeadStageSelect({
         <SelectContent>
           {DEAL_STAGES.map((stage) => (
             <SelectItem key={stage} value={stage}>
-              {dealStageLabels[language][stage]}
+              {t(`leads:stage.${stage}`)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -79,7 +78,7 @@ export function LeadStageSelect({
         }`}
         role="status"
       >
-        {isUpdating ? t("updating") : message}
+        {isUpdating ? t("leads:status.updatingStage") : message}
       </p>
     </div>
   );

@@ -1,0 +1,65 @@
+{
+  "form": {
+    "title": "Новый лид",
+    "description": "Добавьте контакт и назначьте ответственного сотрудника.",
+    "clientName": "Имя клиента",
+    "clientNamePlaceholder": "Введите имя клиента",
+    "phone": "Номер телефона",
+    "phonePlaceholder": "+998 90 123 45 67",
+    "technicalSpec": "Запрошено ТЗ"
+  },
+  "source": {
+    "label": "Источник лида",
+    "cold": "Холодный",
+    "warm": "Тёплый"
+  },
+  "responsible": {
+    "label": "Ответственный",
+    "lead_generator": "Лидоруб",
+    "sales_manager": "МОП"
+  },
+  "stage": {
+    "label": "Этап сделки",
+    "new": "Новый лид",
+    "qualified": "Квалифицирован",
+    "consultation_scheduled": "Назначена консультация",
+    "rejected": "Отказ",
+    "change": "Изменить этап"
+  },
+  "statistics": {
+    "label": "Статистика по лидам",
+    "total": "Всего лидов",
+    "new": "Новые",
+    "qualified": "Квалифицированы",
+    "consultations": "Консультации",
+    "rejected": "Отказы",
+    "withTechnicalSpec": "С запросом ТЗ"
+  },
+  "list": {
+    "title": "Сохранённые лиды",
+    "description": "Актуальные лиды, отсортированные от новых к старым.",
+    "count_zero": "Нет сохранённых лидов",
+    "count_one": "{{count}} сохранённый лид",
+    "count_few": "{{count}} сохранённых лида",
+    "count_many": "{{count}} сохранённых лидов",
+    "count_other": "{{count}} сохранённого лида",
+    "phone": "Телефон",
+    "technicalSpec": "Запрошено ТЗ",
+    "created": "Создан",
+    "actions": "Действия"
+  },
+  "empty": {
+    "title": "Лидов пока нет",
+    "description": "Создайте первый лид — он появится здесь и сохранится после перезапуска.",
+    "action": "Добавить первый лид"
+  },
+  "status": {
+    "loading": "Загружаем лиды…",
+    "loadError": "Не удалось загрузить сохранённые лиды.",
+    "saved": "Лид успешно сохранён.",
+    "formReset": "Форма очищена.",
+    "updatingStage": "Обновляем…",
+    "stageUpdated": "Этап сделки обновлён.",
+    "stageUpdateError": "Не удалось изменить этап сделки."
+  }
+}

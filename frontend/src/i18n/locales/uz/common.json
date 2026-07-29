@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Mini CRM",
+    "title": "Lidlar bilan ishlash",
+    "description": "Savdo voronkasi va keyingi harakatlarni boshqaring"
+  },
+  "language": {
+    "label": "Til",
+    "ru": "Русский",
+    "en": "English",
+    "uz": "O‘zbekcha"
+  },
+  "actions": {
+    "save": "Saqlash",
+    "saving": "Saqlanmoqda…",
+    "reset": "Tozalash",
+    "retry": "Qayta urinish"
+  },
+  "answers": {
+    "yes": "Ha",
+    "no": "Yo‘q"
+  },
+  "errors": {
+    "title": "Xatolik yuz berdi",
+    "generic": "Xatolik yuz berdi. Qayta urinib ko‘ring.",
+    "network": "Server bilan bog‘lanib bo‘lmadi.",
+    "malformedResponse": "Server noto‘g‘ri javob qaytardi.",
+    "server": "Server xatosi. Qayta urinib ko‘ring.",
+    "notFound": "Lid topilmadi. Sahifani yangilang."
+  }
+}

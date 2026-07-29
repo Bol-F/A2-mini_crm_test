@@ -1,0 +1,5 @@
+{
+  "required": "Required field.",
+  "clientNameRequired": "Enter the client name.",
+  "phoneRequired": "Enter the phone number."
+}

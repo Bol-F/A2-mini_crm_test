@@ -1,6 +1,5 @@
 import { Badge } from "./ui/badge";
 import { useLanguage } from "../hooks/useLanguage";
-import { dealStageLabels } from "../lib/i18n";
 import type { DealStage } from "../types/lead";
 import { cn } from "../lib/utils";
 
@@ -19,7 +18,7 @@ const stageClasses: Record<DealStage, string> = {
 };
 
 export function LeadStageBadge({ stage }: LeadStageBadgeProps) {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <Badge
@@ -27,7 +26,7 @@ export function LeadStageBadge({ stage }: LeadStageBadgeProps) {
       className={cn("whitespace-normal text-left", stageClasses[stage])}
     >
       <span aria-hidden="true" className="mr-1">●</span>
-      {dealStageLabels[language][stage]}
+      {t(`leads:stage.${stage}`)}
     </Badge>
   );
 }

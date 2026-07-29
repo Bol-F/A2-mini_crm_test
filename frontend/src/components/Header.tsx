@@ -14,12 +14,14 @@ export function Header() {
             <LayoutDashboard aria-hidden="true" className="size-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-primary">{t("appName")}</p>
+            <p className="text-sm font-semibold text-primary">
+              {t("common:app.name")}
+            </p>
             <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
-              {t("pageTitle")}
+              {t("common:app.title")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t("pageDescription")}
+              {t("common:app.description")}
             </p>
           </div>
         </div>

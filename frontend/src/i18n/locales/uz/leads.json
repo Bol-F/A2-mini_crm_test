@@ -1,0 +1,63 @@
+{
+  "form": {
+    "title": "Yangi lid",
+    "description": "Kontaktni kiriting va mas’ul xodimni tayinlang.",
+    "clientName": "Mijoz ismi",
+    "clientNamePlaceholder": "Mijoz ismini kiriting",
+    "phone": "Telefon raqami",
+    "phonePlaceholder": "+998 90 123 45 67",
+    "technicalSpec": "Texnik topshiriq so‘ralgan"
+  },
+  "source": {
+    "label": "Lid manbasi",
+    "cold": "Sovuq",
+    "warm": "Iliq"
+  },
+  "responsible": {
+    "label": "Mas’ul xodim",
+    "lead_generator": "Lid generatori",
+    "sales_manager": "Savdo menejeri"
+  },
+  "stage": {
+    "label": "Bitim bosqichi",
+    "new": "Yangi lid",
+    "qualified": "Malakali",
+    "consultation_scheduled": "Konsultatsiya belgilangan",
+    "rejected": "Rad etilgan",
+    "change": "Bosqichni o‘zgartirish"
+  },
+  "statistics": {
+    "label": "Lidlar statistikasi",
+    "total": "Jami lidlar",
+    "new": "Yangi",
+    "qualified": "Malakali",
+    "consultations": "Konsultatsiyalar",
+    "rejected": "Rad etilgan",
+    "withTechnicalSpec": "Texnik topshiriqli"
+  },
+  "list": {
+    "title": "Saqlangan lidlar",
+    "description": "Joriy lidlar yangisidan eskisiga qarab saralangan.",
+    "count_zero": "Saqlangan lidlar yo‘q",
+    "count_one": "{{count}} ta saqlangan lid",
+    "count_other": "{{count}} ta saqlangan lid",
+    "phone": "Telefon",
+    "technicalSpec": "Texnik topshiriq so‘ralgan",
+    "created": "Yaratilgan",
+    "actions": "Amallar"
+  },
+  "empty": {
+    "title": "Hozircha lidlar yo‘q",
+    "description": "Birinchi lidni yarating. U shu yerda ko‘rinadi va qayta ishga tushirilganda saqlanadi.",
+    "action": "Birinchi lidni qo‘shish"
+  },
+  "status": {
+    "loading": "Lidlar yuklanmoqda…",
+    "loadError": "Saqlangan lidlarni yuklab bo‘lmadi.",
+    "saved": "Lid muvaffaqiyatli saqlandi.",
+    "formReset": "Shakl tozalandi.",
+    "updatingStage": "Yangilanmoqda…",
+    "stageUpdated": "Bitim bosqichi yangilandi.",
+    "stageUpdateError": "Bitim bosqichini yangilab bo‘lmadi."
+  }
+}

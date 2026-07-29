@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Mini CRM",
+    "title": "Lead management",
+    "description": "Manage your sales pipeline and next actions"
+  },
+  "language": {
+    "label": "Language",
+    "ru": "Русский",
+    "en": "English",
+    "uz": "O‘zbekcha"
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving…",
+    "reset": "Reset",
+    "retry": "Retry"
+  },
+  "answers": {
+    "yes": "Yes",
+    "no": "No"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "generic": "Something went wrong. Please try again.",
+    "network": "Could not connect to the server.",
+    "malformedResponse": "The server returned an invalid response.",
+    "server": "Server error. Please try again.",
+    "notFound": "Lead not found. Refresh the page."
+  }
+}
